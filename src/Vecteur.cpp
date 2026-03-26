@@ -6,6 +6,11 @@ Vecteur::Vecteur(double x, double y, double z) {
     this->z = z;
 }
 
+Vecteur::Vecteur() {
+    this->x = 0.0;
+    this->y = 0.0;
+    this->z = 0.0;
+}
 
 // Getters
 double Vecteur::getX() const { return x; }
