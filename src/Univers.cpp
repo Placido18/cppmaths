@@ -59,9 +59,15 @@ void Univers::evoluer(double dt, double t_end) {
 }
 
 // les particules ont la même vitesse
-void Univers::appliquerVitesse(Vecteur nouvelle_vitesse) {
+void Univers::appliquerVitesse(double vitesse) {
     for (auto& p : particules) {
-        p.setVitesse(nouvelle_vitesse);
+        Vecteur vit = p.getVitesse();
+        double norm = std::sqrt(vit.getX() * vit.getX() + vit.getY() * vit.getY() + vit.getZ() * vit.getZ());
+        if (norm > 0) {
+            double scale = vitesse / norm;
+            Vecteur new_vit(vit.getX() * scale, vit.getY() * scale, vit.getZ() * scale);
+            p.setVitesse(new_vit);
+        }
     }
 }
 
