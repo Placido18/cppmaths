@@ -1,5 +1,5 @@
-#ifndef PARTICULE_HPP
-#define PARTICULE_HPP
+#ifndef VECTEUR_HPP
+#define VECTEUR_HPP
 
 class Vecteur {
     private:
@@ -26,6 +26,7 @@ class Vecteur {
         Vecteur operator-(const Vecteur& v) const;
         Vecteur operator*(double scalar) const;
         double dot(const Vecteur& v) const; // Produit scalaire
+        Vecteur operator+=(const Vecteur& v);
 };
 
 #endif 

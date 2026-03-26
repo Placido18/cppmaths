@@ -3,6 +3,7 @@
 
 #include <string>
 #include <array>
+#include "Vecteur.hpp"
 
 using Vec2 = std::array<double, 2>;
 
@@ -11,28 +12,28 @@ class Particule{
         int id;
         std::string type;
         double masse;
-        Vec2 position;
-        Vec2 vitesse;
-        Vec2 force;
+        Vecteur position;
+        Vecteur vitesse;
+        Vecteur force;
 
     public:
         void afficher() const;
-        Particule(int id, std::string type, double masse, Vec2 pos, Vec2 vitesse);
+        Particule(int id, std::string type, double masse, Vecteur pos, Vecteur vitesse);
 
         // Getters
         int getId() const;
         std::string getType() const;
         double getMasse() const;
-        Vec2 getPosition() const;
-        Vec2 getVitesse() const;
-        Vec2 getForce() const; 
+        Vecteur getPosition() const;
+        Vecteur getVitesse() const;
+        Vecteur getForce() const; 
         
         // Setters
-        void setPosition(const Vec2& pos);
-        void setVitesse(const Vec2& vitesse);
-        void setForce(const Vec2& f);
+        void setPosition(const Vecteur& pos);
+        void setVitesse(const Vecteur& vitesse);
+        void setForce(const Vecteur& f);
 
-        void ajouterForce(Vec2& f);
+        void ajouterForce(Vecteur& f);
 };
 
 #endif

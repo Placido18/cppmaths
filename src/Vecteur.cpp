@@ -34,3 +34,11 @@ Vecteur Vecteur::operator*(double scalar) const {
 double Vecteur::dot(const Vecteur& v) const {
     return x * v.x + y * v.y + z * v.z;
 }
+
+// ajout du +=, interressant pour les forces
+Vecteur Vecteur::operator+=(const Vecteur& v) {
+    x += v.x;
+    y += v.y;
+    z += v.z;
+    return *this;
+}
