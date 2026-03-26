@@ -9,8 +9,11 @@ class Univers {
         int nb_particules;
         std::deque<Particule> particules;
 
+        void calculerForces();
+
     public:
         Univers(int dimension, int nb_particules, std::deque<Particule> particules);
+        void avancer
 };
 
 #endif
