@@ -1,3 +1,3 @@
-/Users/placideneuilly/ensimag/2a/c++/build/CMakeFiles/mon_programme.dir
-/Users/placideneuilly/ensimag/2a/c++/build/CMakeFiles/edit_cache.dir
-/Users/placideneuilly/ensimag/2a/c++/build/CMakeFiles/rebuild_cache.dir
+/home/menianer/ensimag/C++curse/cppmaths/build/CMakeFiles/mon_programme.dir
+/home/menianer/ensimag/C++curse/cppmaths/build/CMakeFiles/edit_cache.dir
+/home/menianer/ensimag/C++curse/cppmaths/build/CMakeFiles/rebuild_cache.dir

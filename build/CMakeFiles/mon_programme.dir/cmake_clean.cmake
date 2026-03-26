@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/mon_programme.dir/src/Particule.cpp.o"
   "CMakeFiles/mon_programme.dir/src/Particule.cpp.o.d"
+  "CMakeFiles/mon_programme.dir/src/Vecteur.cpp.o"
+  "CMakeFiles/mon_programme.dir/src/Vecteur.cpp.o.d"
   "CMakeFiles/mon_programme.dir/src/main.cpp.o"
   "CMakeFiles/mon_programme.dir/src/main.cpp.o.d"
   "mon_programme"
