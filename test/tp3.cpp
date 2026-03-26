@@ -30,10 +30,10 @@ Univers genererUniversAleatoire(int k) {
 }
 
 int main() {
-    std::cout << "--- TEST DE PERFORMANCE : LAB 3 ---" << std::endl;
+    std::cout << "test performance" << std::endl;
 
-    // --- QUESTION 7 : PERFORMANCE EN INSERTION ---
-    // Test pour (2^5)^3 = 32,768 particules [cite: 274]
+    // q7
+    // Test pour (2^5)^3
     int N_Q7 = std::pow(32, 3);
     auto start_ins = std::chrono::steady_clock::now();
     
@@ -51,13 +51,12 @@ int main() {
     std::cout << "Nb Particules (N) | Temps Calcul Forces (s)" << std::endl;
     std::cout << "------------------------------------------" << std::endl;
 
-    // --- QUESTION 8 : VARIATION DE k = 3...7  ---
-    // ATTENTION : Pour k=7, N = 2 097 152. Le calcul en O(N^2) sera extrêmement long.
-    // Nous limitons ici l'affichage si le temps devient excessif.
+    //q8, k=3 et k=7
+    // Pour k=7. Le calcul sera extrêmement long.
+    // On limite l'affichage si le temps devient excessif.
     for (int k = 3; k <= 7; ++k) {
         int N = std::pow(std::pow(2, k), 3);
         
-        // On génère l'univers
         Univers u = genererUniversAleatoire(k);
         
         // Mesure du temps pour calculer les forces
@@ -70,7 +69,7 @@ int main() {
 
         // Condition de sécurité : on arrête si le calcul dépasse 30 secondes pour le TP
         if (time_f.count() > 30.0) {
-            std::cout << "=> Test interrompu : N trop grand pour une complexite O(N^2)." << std::endl;
+            std::cout << "=> Test interrompu : N trop grand pour un temps raisonnable" << std::endl;
             break;
         }
     }
