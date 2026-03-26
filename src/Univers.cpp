@@ -72,10 +72,16 @@ void Univers::calculerForces() {
             Vecteur pos_j = particules[j].getPosition();
             Vecteur r_ij = pos_j - pos_i;
             double distance = std::sqrt(r_ij.getX() * r_ij.getX() + r_ij.getY() * r_ij.getY() + r_ij.getZ() * r_ij.getZ());
-            
+            double m_i = particules[i].getMasse();
+            double m_j = particules[j].getMasse();
             if (distance > 0) {
-                double force_magnitude = (6.67430e-11 * particules[i].getMasse() * particules[j].getMasse()) / (distance * distance);
-                Vecteur force_ij = r_ij * (force_magnitude / distance);
+                double facteur_force = (m_i * m_j) / (distance * distance * distance);
+                // creation du vecteur forve ij;
+                Vecteur force_ij = {
+                    facteur_force * r_ij.getX(),
+                    facteur_force * r_ij.getY(),
+                    facteur_force * r_ij.getZ()
+                };
                 particules[i].ajouterForce(force_ij);
                 Vecteur force_ji = force_ij * -1;
                 particules[j].ajouterForce(force_ji);
