@@ -7,7 +7,7 @@
 
 void calculerForces(std::deque<Particule>& particules) {
     for (auto& p : particules) {
-        p.setForce({0.0, 0.0});
+        p.setForce({0.0, 0.0, 0.0});
     }
 
     for (size_t i = 0; i < particules.size(); ++i) {
@@ -16,15 +16,15 @@ void calculerForces(std::deque<Particule>& particules) {
             // une particule n'exerce pas de force sur elle-même
             if (i == j) continue; 
 
-            Vec2 pos_i = particules[i].getPosition();
-            Vec2 pos_j = particules[j].getPosition();
+            Vecteur pos_i = particules[i].getPosition();
+            Vecteur pos_j = particules[j].getPosition();
 
             // calcul du vecteur distance entre les particules i et j
-            double rx = pos_j[0] - pos_i[0];
-            double ry = pos_j[1] - pos_i[1];
-
+            double rx = pos_j.getX() - pos_i.getX();
+            double ry = pos_j.getY() - pos_i.getY();
+            double rz = pos_j.getZ() - pos_i.getZ();
             // calcul de la distance
-            double dist_carre = rx * rx + ry * ry;
+            double dist_carre = rx * rx + ry * ry + rz * rz;
             double dist = std::sqrt(dist_carre);
 
             if (dist == 0.0) continue;
@@ -35,9 +35,10 @@ void calculerForces(std::deque<Particule>& particules) {
             double facteur_force = (m_i * m_j) / (dist * dist * dist);
 
             // creation du vecteur forve ij;
-            Vec2 force_ij = {
+            Vecteur force_ij = {
                 facteur_force * rx,
-                facteur_force * ry
+                facteur_force * ry,
+                facteur_force * rz
             };
 
             particules[i].ajouterForce(force_ij);
@@ -53,10 +54,10 @@ int main() {
     // création du système gravitationnel
     std::deque<Particule> systeme;
 
-    systeme.push_back(Particule(1, "Soleil", 1.0, {0.0, 0.0}, {0.0, 0.0}));
-    systeme.push_back(Particule(2, "Terre", 3.0e-6, {0.0, 1.0}, {-1.0, 0.0}));
-    systeme.push_back(Particule(3, "Jupiter", 9.55e-4, {0.0, 5.36}, {-0.425, 0.0}));
-    systeme.push_back(Particule(4, "Halley", 1.0e-14, {34.75, 0.0}, {0.0, 0.0296}));
+    systeme.push_back(Particule(1, "Soleil", 1.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}));
+    systeme.push_back(Particule(2, "Terre", 3.0e-6, {0.0, 1.0, 0.0}, {-1.0, 0.0, 0.0}));
+    systeme.push_back(Particule(3, "Jupiter", 9.55e-4, {0.0, 5.36, 0.0}, {-0.425, 0.0, 0.0}));
+    systeme.push_back(Particule(4, "Halley", 1.0e-14, {34.75, 0.0, 0.0}, {0.0, 0.0296, 0.0}));
 
     // Paramètres de l'algorithme
     double dt = 0.015;
@@ -76,27 +77,28 @@ int main() {
 
         // maj des positions
         for (auto& p : systeme) {
-            Vec2 pos = p.getPosition();
-            Vec2 vit = p.getVitesse();
-            Vec2 force = p.getForce();
+            Vecteur pos = p.getPosition();
+            Vecteur vit = p.getVitesse();
+            Vecteur force = p.getForce();
             double m = p.getMasse();
 
-            Vec2 new_pos = {
-                pos[0] + dt * (vit[0] + 0.5 / m * force[0] * dt),
-                pos[1] + dt * (vit[1] + 0.5 / m * force[1] * dt)
+            Vecteur new_pos = {
+                pos.getX() + dt * (vit.getX() + 0.5 / m * force.getX() * dt),
+                pos.getY() + dt * (vit.getY() + 0.5 / m * force.getY() * dt),
+                pos.getZ() + dt * (vit.getZ() + 0.5 / m * force.getZ() * dt)
             };
             p.setPosition(new_pos);
         }
 
-        // on écrit le temps, puis toutes les positions (x, y) de tous les astres
+        // on écrit le temps, puis toutes les positions (x, y, z) de tous les astres
         fichier << t << " ";
         for (const auto& p : systeme) {
-            fichier << p.getPosition()[0] << " " << p.getPosition()[1] << " ";
+            fichier << p.getPosition().getX() << " " << p.getPosition().getY() << " " << p.getPosition().getZ() << " ";
         }
         fichier << "\n";
 
         // sauvegarde des anciennes forces
-        std::deque<Vec2> f_old;
+        std::deque<Vecteur> f_old;
         for (auto& p : systeme) {
             f_old.push_back(p.getForce());
         }
@@ -106,14 +108,15 @@ int main() {
 
         // maj des vitesses
         for (size_t k = 0; k < systeme.size(); ++k) {
-            Vec2 vit = systeme[k].getVitesse();
-            Vec2 force = systeme[k].getForce();
-            Vec2 ancienne_force = f_old[k]; 
+            Vecteur vit = systeme[k].getVitesse();
+            Vecteur force = systeme[k].getForce();
+            Vecteur ancienne_force = f_old[k]; 
             double m = systeme[k].getMasse();
 
-            Vec2 new_vit = {
-                vit[0] + dt * (0.5 / m) * (force[0] + ancienne_force[0]),
-                vit[1] + dt * (0.5 / m) * (force[1] + ancienne_force[1])
+            Vecteur new_vit = {
+                vit.getX() + dt * (0.5 / m) * (force.getX() + ancienne_force.getX()),
+                vit.getY() + dt * (0.5 / m) * (force.getY() + ancienne_force.getY()),
+                vit.getZ() + dt * (0.5 / m) * (force.getZ() + ancienne_force.getZ())
             };
             systeme[k].setVitesse(new_vit);
         }
