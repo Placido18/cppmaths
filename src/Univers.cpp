@@ -1,5 +1,6 @@
 #include "Univers.hpp"
 #include <iostream>
+#include <cmath>
 
 /// on utilise deque pour la collection de particules car elle possède les meilleures performances (voir comparaison avec list et vector dand le main)
 Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particules) {
@@ -65,6 +66,24 @@ void Univers::appliquerVitesse(double vitesse) {
             double scale = vitesse / norm;
             Vecteur new_vit(vit.getX() * scale, vit.getY() * scale, vit.getZ() * scale);
             p.setVitesse(new_vit);
+        }
+    }
+}
+void Univers::calculerForces() {
+    for (size_t i = 0; i < particules.size() - 1; ++i) {
+        for (size_t j = i + 1; j < particules.size(); ++j) {
+            Vecteur pos_i = particules[i].getPosition();
+            Vecteur pos_j = particules[j].getPosition();
+            Vecteur r_ij = pos_j - pos_i;
+            double distance = std::sqrt(r_ij.getX() * r_ij.getX() + r_ij.getY() * r_ij.getY() + r_ij.getZ() * r_ij.getZ());
+            
+            if (distance > 0) {
+                double force_magnitude = (6.67430e-11 * particules[i].getMasse() * particules[j].getMasse()) / (distance * distance);
+                Vecteur force_ij = r_ij * (force_magnitude / distance);
+                particules[i].ajouterForce(force_ij);
+                Vecteur force_ji = force_ij * -1;
+                particules[j].ajouterForce(force_ji);
+            }
         }
     }
 }

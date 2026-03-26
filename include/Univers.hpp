@@ -20,7 +20,7 @@ class Univers {
         void afficher(double t) const;
 
         // calcul les forces d'interaction
-        void calculerForces() const;
+        void calculerForces() ;
 
         // méthode d'évolution
         void evoluer(double dt, double t_end);
