@@ -9,11 +9,25 @@ class Univers {
         int nb_particules;
         std::deque<Particule> particules;
 
-        void calculerForces();
 
     public:
         Univers(int dimension, int nb_particules, std::deque<Particule> particules);
-        void avancer
+
+        // pour faire avancer les particules pendant un temps de dt
+        void avancer(double dt);
+
+        // permet d'afficher les positions des particules à un instant t
+        void afficher(double t) const;
+
+        // calcul les forces d'interaction
+        void calculerForces() const;
+
+        // méthode d'évolution
+        void evoluer(double dt, double t_end);
+
+        // change la vitesse de toutes les particules (supposées identiques)
+        void appliquerVitesse(double vitesse);
+
 };
 
 #endif

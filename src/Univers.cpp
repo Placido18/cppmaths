@@ -8,6 +8,7 @@ Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particu
     this->particules = particules;
 }
 
+// pas encore mis l'impact des forces
 void Univers::avancer(double dt) {
     for (auto& p : particules) {
         Vecteur pos = p.getPosition();
@@ -50,8 +51,20 @@ void Univers::afficher(double t) const {
 void Univers::evoluer(double dt, double t_end) {
     double t = 0.0;
     while (t < t_end) {
-        calculerForces();
+        calculerForces(); // dépend du système
         avancer(dt);
         t += dt;
+    }
+}
+
+void Univers::appliquerVitesse(double vitesse) {
+    for (auto& p : particules) {
+        Vecteur vit = p.getVitesse();
+        double norm = std::sqrt(vit.getX() * vit.getX() + vit.getY() * vit.getY() + vit.getZ() * vit.getZ());
+        if (norm > 0) {
+            double scale = vitesse / norm;
+            Vecteur new_vit(vit.getX() * scale, vit.getY() * scale, vit.getZ() * scale);
+            p.setVitesse(new_vit);
+        }
     }
 }
