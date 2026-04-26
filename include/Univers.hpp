@@ -2,16 +2,35 @@
 #define UNIVERS_HPP
 #include <deque>
 #include "Particule.hpp"
+#include "Vecteur.hpp"
+#include "Cellule.hpp"
+#include <vector>
 
 class Univers {
     private:
         int dimension;
         int nb_particules;
+
+        //les particules sont stockées dans l'univers,
+        //les cellules contiennent des pointeurs vers les particules, mais ne les possèdent pas
+        //voir s'il n'y a pas de problème de cohérence entre deque et vector, check
         std::deque<Particule> particules;
+
+        //ajout du rayon de coupe et d'une longueur caractéristique
+
+        double rcut;
+        Vecteur Ld; 
+
+        //un univers possède une liste de cellules
+        std::vector<Cellule> cellules;
+        //std::array<Cellule, dimension*dimension*dimension> cellules; check
+        
+        
+
 
 
     public:
-        Univers(int dimension, int nb_particules, std::deque<Particule> particules);
+        Univers(int dimension, int nb_particules, std::deque<Particule> particules, double rcut, Vecteur Ld, std::vector<Cellule> cellules);
 
         // pour faire avancer les particules pendant un temps de dt
         void avancer(double dt);
@@ -27,7 +46,10 @@ class Univers {
 
         // change la vitesse de toutes les particules (supposées identiques)
         void appliquerVitesse(double vitesse);
+        
 
+        // méthode pour accéder à la dimension de l'univers
+        int getDimension() const;
 };
 
 #endif

@@ -3,10 +3,16 @@
 #include <cmath>
 
 /// on utilise deque pour la collection de particules car elle possède les meilleures performances (voir comparaison avec list et vector dand le main)
-Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particules) {
+Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particules, double rcut, Vecteur Ld, std::vector<Cellule> cellules) {
     this->dimension = dimension;
     this->nb_particules = nb_particules;
     this->particules = particules;
+    this->rcut = rcut;
+    this->Ld = Ld;
+    this->cellules = cellules;
+
+    
+
 }
 
 // pas encore mis l'impact des forces
@@ -94,4 +100,10 @@ void Univers::calculerForces() {
             }
         }
     }
+
+}
+
+int Univers::getDimension() const {
+    return dimension;
+
 }
