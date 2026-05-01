@@ -2,7 +2,10 @@
 #include <cmath>
 #include <fstream>
 
-double calculLennardJones(double r, double epsilon, double sigma) {
+double calculLennardJones(double r, double epsilon, double sigma, double rcut) {
+    if (r > rcut) {
+        return 0; // Potentiel nul au-delà de la distance de coupure    
+    }
     //on prefere r*r pour les puissances moins couteux que la fonction pow
     if (r==0) {
         return 0;
@@ -16,6 +19,8 @@ double calculLennardJones(double r, double epsilon, double sigma) {
     return 4 * epsilon * (sigma12 / r12 - sigma6 / r6);
 }
 
+// tracé du potentiel de Lennard-Jones en fonction de la distance r:Z
+/*
 int main() {
     double epsilon = 1;
     double sigma = 1;
@@ -32,7 +37,7 @@ int main() {
     }
 
     for (double r = r_min; r <= r_max; r += pas_r) {
-        double potential = calculLennardJones(r, epsilon, sigma);
+        double potential = calculLennardJones(r, epsilon, sigma );
         fichier << r << " " << potential << "\n";
     }
 
@@ -40,3 +45,5 @@ int main() {
 
     return 0;
 }
+    
+*/

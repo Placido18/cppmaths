@@ -4,6 +4,7 @@
 #include "Particule.hpp"
 #include "Vecteur.hpp"
 #include "Cellule.hpp"
+
 #include <vector>
 
 class Univers {
@@ -18,7 +19,7 @@ class Univers {
 
         //ajout du rayon de coupe et d'une longueur caractéristique
 
-        double rcut;
+        double rcut;// c'est à la fois la distance de coupure pour les interactions et donc la taille des cellules du maillage
         Vecteur Ld; 
 
         //un univers possède une liste de cellules
@@ -50,6 +51,9 @@ class Univers {
 
         // méthode pour accéder à la dimension de l'univers
         int getDimension() const;
+
+        void initialiserMaillage() ; // méthode pour initialiser le maillage de cellules dans l'univers, à appeler au début de la simulation
+
 };
 
 #endif
