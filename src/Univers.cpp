@@ -161,6 +161,10 @@ int Univers::getDimension() const {
 
 }
 
+const std::deque<Particule>& Univers::getParticules() const {
+    return particules;
+}
+
 void Univers::initialiserMaillage() {
     // Calcul de base pour X (commun à toutes les dimensions)
     int ncd_x = Ld.getX() / rcut;

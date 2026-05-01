@@ -89,6 +89,12 @@ class Univers {
         int getDimension() const;
 
         /**
+         * @brief Accesseur pour récupérer la liste des particules.
+         * @return Une référence constante vers la deque de particules.
+         */
+        const std::deque<Particule>& getParticules() const;
+
+        /**
          * @brief Initialise le maillage des cellules dans l'univers.
          * 
          * À appeler au début de la simulation.
