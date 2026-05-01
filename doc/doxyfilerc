@@ -1,0 +1,8 @@
+PROJECT_NAME           = "Simulation Gravitationnelle"
+OUTPUT_DIRECTORY       = docu
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+INPUT                  = include src demo
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
