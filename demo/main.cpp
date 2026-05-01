@@ -1,3 +1,12 @@
+/**
+ * @mainpage Documentation du TP C++
+ * 
+ * @section intro_sec Introduction
+ * Bienvenue dans la documentation de notre projet de simulation de systèmes gravitationnels.
+ * 
+ * Ce projet utilise l'algorithme de Störmer-Verlet pour simuler et calculer l'évolution temporelle de particules dans un univers donné (comme notre système solaire).
+ */
+
 #include "Particule.hpp"
 #include <iostream>
 #include <deque>

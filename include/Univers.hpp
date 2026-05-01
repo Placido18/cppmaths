@@ -7,6 +7,11 @@
 
 #include <vector>
 
+/**
+ * @brief Classe représentant l'univers de la simulation.
+ * 
+ * Gère l'ensemble des particules, le partitionnement spatial (maillage en cellules), et l'évolution temporelle du système.
+ */
 class Univers {
     private:
         int dimension;
@@ -27,33 +32,67 @@ class Univers {
         //std::array<Cellule, dimension*dimension*dimension> cellules; check
         
         
-
-
-
     public:
+        /**
+         * @brief Constructeur de l'Univers.
+         * @param dimension Dimension de l'espace (1, 2 ou 3).
+         * @param nb_particules Nombre de particules dans l'univers.
+         * @param particules Conteneur contenant toutes les particules.
+         * @param rcut Rayon de coupure pour les interactions et taille des cellules.
+         * @param Ld Dimensions géométriques de l'univers.
+         * @param cellules Liste des cellules formant le maillage.
+         */
         Univers(int dimension, int nb_particules, std::deque<Particule> particules, double rcut, Vecteur Ld, std::vector<Cellule> cellules);
 
-        // pour faire avancer les particules pendant un temps de dt
+        /**
+         * @brief Fait avancer les particules pendant un pas de temps.
+         * @param dt Pas de temps de la simulation.
+         */
         void avancer(double dt);
 
-        // permet d'afficher les positions des particules à un instant t
+        /**
+         * @brief Affiche les positions des particules.
+         * @param t Instant actuel de la simulation.
+         */
         void afficher(double t) const;
 
-        // calcul les forces d'interaction
+        /**
+         * @brief Calcule les forces d'interaction entre les particules.
+         */
         void calculerForces() ;
 
-        // méthode d'évolution
+        /**
+         * @brief Fait évoluer le système complet sur une durée donnée.
+         * @param dt Pas de temps d'itération.
+         * @param t_end Temps final d'arrêt.
+         */
         void evoluer(double dt, double t_end);
 
-        // change la vitesse de toutes les particules (supposées identiques)
+        /**
+         * @brief Applique une vitesse scalaire uniforme à toutes les particules.
+         * @param vitesse Vitesse scalaire à appliquer.
+         */
         void appliquerVitesse(double vitesse);
         
 
-        // méthode pour accéder à la dimension de l'univers
+        /**
+         * @brief Accesseur pour la dimension de l'univers.
+         * @return La dimension géométrique (1, 2, ou 3).
+         */
         int getDimension() const;
 
+        /**
+         * @brief Initialise le maillage des cellules dans l'univers.
+         * 
+         * À appeler au début de la simulation.
+         */
         void initialiserMaillage() ; // méthode pour initialiser le maillage de cellules dans l'univers, à appeler au début de la simulation
 
+        /**
+         * @brief Assigne chaque particule à la cellule correspondante.
+         * 
+         * À appeler après l'initialisation du maillage et après chaque déplacement.
+         */
         void assignerParticulesAuxCellules() ; // méthode pour assigner chaque particule à la cellule correspondante en fonction de sa position, à appeler après l'initialisation du maillage et après chaque déplacement des particules
 };
 

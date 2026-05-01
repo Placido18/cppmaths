@@ -4,7 +4,12 @@
 #include "Particule.hpp"
 #include <vector>
 
-
+/**
+ * @brief Représente une cellule de l'espace pour le partitionnement du maillage.
+ * 
+ * Utilisée pour optimiser le calcul des forces en restreignant les interactions
+ * aux particules des cellules voisines.
+ */
 class Cellule{
     private:
         std::vector<Particule*> particules;//liste de pointeurs vers les particules présentes dans la cellule
@@ -15,8 +20,24 @@ class Cellule{
         Vecteur centre; // position du centre de la cellule, utile pour calculer les forces d'interaction
 
     public:
+        /**
+         * @brief Constructeur d'une Cellule.
+         * @param particules Liste des pointeurs vers les particules contenues.
+         * @param voisines Liste des pointeurs vers les cellules voisines.
+         * @param centre Vecteur représentant le centre géométrique de la cellule.
+         */
         Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisines, Vecteur centre);
+        
+        /**
+         * @brief Ajoute une cellule voisine à la liste des voisines de l'instance.
+         * @param cellule Pointeur vers la cellule voisine à ajouter.
+         */
         void addVoisine(Cellule* cellule);
+
+        /**
+         * @brief Ajoute une particule à cette cellule.
+         * @param p Pointeur vers la particule à ajouter.
+         */
         void addParticule(Particule* p);
 
 };
