@@ -38,7 +38,7 @@ Univers genererUniversAleatoire(int k) {
         particules.push_back(Particule(i, "particule", 1.0, pos, vit));
     }
 
-    return Univers(3, total_particles, particules);
+    return Univers(3, total_particles, particules, 10000.0, Vecteur(1.0, 1.0, 1.0), {});
 }
 
 /**
