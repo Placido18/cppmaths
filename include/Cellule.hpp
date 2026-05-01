@@ -17,6 +17,7 @@ class Cellule{
     public:
         Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisines, Vecteur centre);
         void addVoisine(Cellule* cellule);
+        void addParticule(Particule* p);
 
 };
 

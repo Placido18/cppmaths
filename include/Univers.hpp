@@ -54,6 +54,7 @@ class Univers {
 
         void initialiserMaillage() ; // méthode pour initialiser le maillage de cellules dans l'univers, à appeler au début de la simulation
 
+        void assignerParticulesAuxCellules() ; // méthode pour assigner chaque particule à la cellule correspondante en fonction de sa position, à appeler après l'initialisation du maillage et après chaque déplacement des particules
 };
 
 #endif

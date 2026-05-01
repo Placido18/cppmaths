@@ -121,52 +121,67 @@ int Univers::getDimension() const {
 }
 
 void Univers::initialiserMaillage() {
-    //Pour chaque direction on a ncd cellules avec :
+    // Calcul de base pour X (commun à toutes les dimensions)
     int ncd_x = Ld.getX() / rcut;
+    if (ncd_x == 0) ncd_x = 1; // Sécurité si le domaine est plus petit que rcut
 
     if (dimension == 1) {
+        cellules.reserve(ncd_x);
         for (int i = 0; i < ncd_x; ++i) {
-            //ajout du centre de la cellule dans le constructeur de la cellule
             Vecteur centre((i + 0.5) * rcut, 0, 0);
-            //ajout de la cellule dans le maillage de l'univers
             cellules.emplace_back(std::vector<Particule*>(), std::vector<Cellule*>(), centre);
-            //ajout de la cellule dans la liste des voisines de la cellule précédente
-            if (i > 0) {
-                cellules[i].addVoisine(&cellules[i - 1]);
-                cellules[i - 1].addVoisine(&cellules[i]);
-            }  
         }
-    }
 
-    if (dimension == 2) {
-        // les cellules sont organisées en grille, on les stocke dans un vecteur, la cellule d'indice (i,j) est stockée à l'indice i*ncd_y + j du vecteur
+        for (int i = 0; i < ncd_x; ++i) {
+            for (int di = -1; di <= 1; ++di) {
+                if (di == 0) continue; // On s'ignore soi-même
+                
+                int ni = i + di;
+                if (ni >= 0 && ni < ncd_x) {
+                    cellules[i].addVoisine(&cellules[ni]);
+                }
+            }
+        }
+    } 
+    else if (dimension == 2) {
         int ncd_y = Ld.getY() / rcut;
+        if (ncd_y == 0) ncd_y = 1;
+
+        cellules.reserve(ncd_x * ncd_y);
         for (int i = 0; i < ncd_x; ++i) {
             for (int j = 0; j < ncd_y; ++j) {
                 Vecteur centre((i + 0.5) * rcut, (j + 0.5) * rcut, 0);
                 cellules.emplace_back(std::vector<Particule*>(), std::vector<Cellule*>(), centre);
-                if (j>0 && i>0) {
-                    cellules[i * ncd_y + j].addVoisine(&cellules[i * ncd_y + j - 1]);
-                    cellules[i * ncd_y + j - 1].addVoisine(&cellules[i * ncd_y + j]);
-                    cellules[i * ncd_y + j].addVoisine(&cellules[(i - 1) * ncd_y + j]);
-                    cellules[(i - 1) * ncd_y + j].addVoisine(&cellules[i * ncd_y + j]);
-                    cellules[i * ncd_y + j].addVoisine(&cellules[(i - 1) * ncd_y + j - 1]);
-                    cellules[(i - 1) * ncd_y + j - 1].addVoisine(&cellules[i * ncd_y + j]);
-                    if (j<ncd_y-1) {
-                        cellules[i * ncd_y + j].addVoisine(&cellules[(i - 1) * ncd_y + j + 1]);
-                        cellules[(i - 1) * ncd_y + j + 1].addVoisine(&cellules[i * ncd_y + j]);
-                    }
-                    if (i<ncd_x-1){
-                        cellules[i * ncd_y + j].addVoisine(&cellules[(i + 1) * ncd_y + j-1]);
-                        cellules[(i + 1) * ncd_y + j-1].addVoisine(&cellules[i * ncd_y + j]);
+            }
+        }
+
+        for (int i = 0; i < ncd_x; ++i) {
+            for (int j = 0; j < ncd_y; ++j) {
+                int idx_courant = i * ncd_y + j;
+
+                for (int di = -1; di <= 1; ++di) {
+                    for (int dj = -1; dj <= 1; ++dj) {
+                        if (di == 0 && dj == 0) continue;
+
+                        int ni = i + di;
+                        int nj = j + dj;
+
+                        if (ni >= 0 && ni < ncd_x && nj >= 0 && nj < ncd_y) {
+                            int idx_voisine = ni * ncd_y + nj;
+                            cellules[idx_courant].addVoisine(&cellules[idx_voisine]);
+                        }
                     }
                 }
             }
         }
-    }
-    if (dimension == 3) {
+    } 
+    else if (dimension == 3) {
         int ncd_y = Ld.getY() / rcut;
         int ncd_z = Ld.getZ() / rcut;
+        if (ncd_y == 0) ncd_y = 1;
+        if (ncd_z == 0) ncd_z = 1;
+
+        cellules.reserve(ncd_x * ncd_y * ncd_z);
         for (int i = 0; i < ncd_x; ++i) {
             for (int j = 0; j < ncd_y; ++j) {
                 for (int k = 0; k < ncd_z; ++k) {
@@ -174,6 +189,53 @@ void Univers::initialiserMaillage() {
                     cellules.emplace_back(std::vector<Particule*>(), std::vector<Cellule*>(), centre);
                 }
             }
+        }
+
+        for (int i = 0; i < ncd_x; ++i) {
+            for (int j = 0; j < ncd_y; ++j) {
+                for (int k = 0; k < ncd_z; ++k) {
+                    // Calcul de l'index 1D pour une grille 3D
+                    int idx_courant = (i * ncd_y + j) * ncd_z + k;
+
+                    for (int di = -1; di <= 1; ++di) {
+                        for (int dj = -1; dj <= 1; ++dj) {
+                            for (int dk = -1; dk <= 1; ++dk) {
+                                if (di == 0 && dj == 0 && dk == 0) continue;
+
+                                int ni = i + di;
+                                int nj = j + dj;
+                                int nk = k + dk;
+
+                                if (ni >= 0 && ni < ncd_x && 
+                                    nj >= 0 && nj < ncd_y && 
+                                    nk >= 0 && nk < ncd_z) {
+                                    
+                                    int idx_voisine = (ni * ncd_y + nj) * ncd_z + nk;
+                                    cellules[idx_courant].addVoisine(&cellules[idx_voisine]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Univers::assignerParticulesAuxCellules() {
+    for (auto& p : particules) {
+        Vecteur pos = p.getPosition();
+        int i = pos.getX() / rcut;
+        int j = (dimension >= 2) ? (pos.getY() / rcut) : 0;
+        int k = (dimension == 3) ? (pos.getZ() / rcut) : 0;
+
+        int ncd_x = Ld.getX() / rcut;
+        int ncd_y = (dimension >= 2) ? (Ld.getY() / rcut) : 1;
+        int ncd_z = (dimension == 3) ? (Ld.getZ() / rcut) : 1;
+
+        if (i >= 0 && i < ncd_x && j >= 0 && j < ncd_y && k >= 0 && k < ncd_z) {
+            int idx_cellule = (i * ncd_y + j) * ncd_z + k;
+            cellules[idx_cellule].addParticule(&p);
         }
     }
 }

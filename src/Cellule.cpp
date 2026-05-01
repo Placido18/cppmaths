@@ -10,3 +10,7 @@ Cellule::Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisi
 void Cellule::addVoisine(Cellule* cellule) {
     voisines.push_back(cellule);
 }
+
+void Cellule::addParticule(Particule* p) {
+    particules.push_back(p);
+}
