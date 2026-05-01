@@ -6,10 +6,12 @@
 #include <vector>
 #include "Univers.hpp"
 #include "Particule.hpp"
+// Ajout de Cellule.hpp au cas où il ne serait pas inclus en cascade
+#include "Cellule.hpp" 
 
 /**
  * Fonction utilitaire pour générer un Univers aléatoire
- * Les particules sont uniformément distribuées sur le cube [0, 1]^3 (Question 6) [cite: 274]
+ * Les particules sont uniformément distribuées sur le cube [0, 1]^3
  */
 Univers genererUniversAleatoire(int k) {
     int N_side = std::pow(2, k);
@@ -26,7 +28,13 @@ Univers genererUniversAleatoire(int k) {
         particules.push_back(Particule(i, "particule", 1.0, pos, vit));
     }
 
-    return Univers(3, total_particles, particules);
+    // --- CORRECTION ICI ---
+    // Ajout des paramètres manquants pour le nouveau constructeur du Lab 4
+    double rcut_defaut = 1.0;
+    Vecteur Ld_defaut(1.0, 1.0, 1.0); // Correspond au cube [0, 1]^3
+    std::vector<Cellule> cellules_vides;
+
+    return Univers(3, total_particles, particules, rcut_defaut, Ld_defaut, cellules_vides);
 }
 
 int main() {

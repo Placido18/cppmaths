@@ -1,5 +1,4 @@
 #include "Cellule.hpp"
-#include <vector>
 
 Cellule::Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisines, Vecteur centre) {
     this->particules = particules;

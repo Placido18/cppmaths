@@ -2,6 +2,7 @@
 #define CELLULE_HPP
 
 #include "Particule.hpp"
+#include "Vecteur.hpp"
 #include <vector>
 
 /**
@@ -26,8 +27,7 @@ class Cellule{
          * @param voisines Liste des pointeurs vers les cellules voisines.
          * @param centre Vecteur représentant le centre géométrique de la cellule.
          */
-        Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisines, Vecteur centre);
-        
+        Cellule(std::vector<Particule*> particules, std::vector<Cellule*> voisines, Vecteur centre);        
         /**
          * @brief Ajoute une cellule voisine à la liste des voisines de l'instance.
          * @param cellule Pointeur vers la cellule voisine à ajouter.
