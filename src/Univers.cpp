@@ -200,10 +200,9 @@ void Univers::calculerForces() {
     }
     
     // Paramètres pour Lennard-Jones (valeurs par défaut du Lab 4)
-    double epsilon = 5.0; // [cite: 104]
-    double sigma = 1.0;   // [cite: 104]
-    double epsilon = 1.0; 
-    double sigma = 1.0;  
+    double epsilon = 5.0;
+    double sigma = 1.0;
+
 
     // 2. Boucle sur chaque particule de l'univers
     for (size_t i = 0; i < particules.size(); ++i) {
