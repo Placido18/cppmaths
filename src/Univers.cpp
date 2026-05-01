@@ -134,8 +134,10 @@ void Univers::initialiserMaillage() {
             if (i > 0) {
                 cellules[i].addVoisine(&cellules[i - 1]);
                 cellules[i - 1].addVoisine(&cellules[i]);
+            }  
         }
     }
+
     if (dimension == 2) {
         // les cellules sont organisées en grille, on les stocke dans un vecteur, la cellule d'indice (i,j) est stockée à l'indice i*ncd_y + j du vecteur
         int ncd_y = Ld.getY() / rcut;

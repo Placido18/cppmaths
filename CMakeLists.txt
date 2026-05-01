@@ -12,14 +12,7 @@ add_library(librairie
 
 target_include_directories(librairie PUBLIC include)
 
-
-# Programme principal
-add_executable(main src/main.cpp)
-
-# on lie la bibliothèque au programme principal
-target_link_libraries(main librairie)
-
-
-# programmes de test, pour les questions des tps
-add_executable(tp3 test/tp3.cpp)
-target_link_libraries(tp3 librairie)
+# Ajout des sous-répertoires pour la compilation modulaire
+add_subdirectory(demo)
+add_subdirectory(test)
+add_subdirectory(doc)
