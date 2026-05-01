@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 
 
 /// on utilise deque pour la collection de particules car elle possède les meilleures performances (voir comparaison avec list et vector dand le main)
@@ -18,14 +20,21 @@ Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particu
     this->Ld = Ld;
     this->cellules = cellules;
 
-
+    // Auto-initialisation de la grille si elle est vide
+    if (this->cellules.empty()) {
+        initialiserMaillage();
+        assignerParticulesAuxCellules();
+    }
 }
 
 void Univers::avancer(double dt) {
     // Calcul des dimensions de la grille (limites)
     int ncd_x = Ld.getX() / rcut;
+    if (ncd_x == 0) ncd_x = 1;
     int ncd_y = (dimension >= 2) ? (int)(Ld.getY() / rcut) : 1;
+    if (ncd_y == 0) ncd_y = 1;
     int ncd_z = (dimension == 3) ? (int)(Ld.getZ() / rcut) : 1;
+    if (ncd_z == 0) ncd_z = 1;
 
     for (auto& p : particules) {
         // 1. Calcul des indices de cellule AVANT le déplacement
@@ -89,11 +98,16 @@ void Univers::evoluer(double dt, double t_end) {
 
 void Univers::evoluerVerlet(double dt, double t_end) {
     double t = 0.0;
+    int iteration = 0;
+    int frame_vtk = 0; // Compteur pour les fichiers générés
     std::ofstream fichier("positions.txt");
     calculerForces();
+    
+    sauvegarderVTK(frame_vtk++);
 
     while (t < t_end) {
         t += dt;
+        iteration++;
         
         // 1. Mise à jour des positions
         avancer(dt);
@@ -116,6 +130,11 @@ void Univers::evoluerVerlet(double dt, double t_end) {
         for (size_t i = 0; i < particules.size(); ++i) {
             particules[i].updateVitesse(dt, f_old[i]);
         }
+        
+        // Sauvegarde VTK pour Paraview (1 fois toutes les 100 itérations, sinon y'en a trop)
+        if (iteration % 100 == 0) {
+            sauvegarderVTK(frame_vtk++);
+        }
     }
 }
 
@@ -132,6 +151,48 @@ void Univers::appliquerVitesse(double vitesse) {
     }
 }
 
+void Univers::sauvegarderVTK(int iteration) const {
+    std::ostringstream nom_fichier;
+    nom_fichier << "output_" << std::setfill('0') << std::setw(4) << iteration << ".vtu";
+    std::ofstream out(nom_fichier.str());
+
+    if (!out.is_open()) return;
+
+    out << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+    out << "  <UnstructuredGrid>\n";
+    out << "    <Piece NumberOfPoints=\"" << particules.size() << "\" NumberOfCells=\"0\">\n";
+    
+    out << "      <Points>\n";
+    out << "        <DataArray name=\"Position\" type=\"Float32\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    for (const auto& p : particules) {
+        out << "          " << p.getPosition().getX() << " " << p.getPosition().getY() << " " << p.getPosition().getZ() << "\n";
+    }
+    out << "        </DataArray>\n";
+    out << "      </Points>\n";
+    
+    out << "      <PointData Vectors=\"Velocity\">\n";
+    out << "        <DataArray type=\"Float32\" Name=\"Velocity\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    for (const auto& p : particules) {
+        out << "          " << p.getVitesse().getX() << " " << p.getVitesse().getY() << " " << p.getVitesse().getZ() << "\n";
+    }
+    out << "        </DataArray>\n";
+    out << "        <DataArray type=\"Float32\" Name=\"Masse\" format=\"ascii\">\n";
+    for (const auto& p : particules) {
+        out << "          " << p.getMasse() << "\n";
+    }
+    out << "        </DataArray>\n";
+    out << "      </PointData>\n";
+    
+    out << "      <Cells>\n";
+    out << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n        </DataArray>\n";
+    out << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n        </DataArray>\n";
+    out << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n        </DataArray>\n";
+    out << "      </Cells>\n";
+    out << "    </Piece>\n";
+    out << "  </UnstructuredGrid>\n";
+    out << "</VTKFile>\n";
+}
+
 void Univers::calculerForces() {
     // 1. Remise à zéro des forces pour toutes les particules
     for (auto& p : particules) {
@@ -139,8 +200,8 @@ void Univers::calculerForces() {
     }
     
     // Paramètres pour Lennard-Jones (valeurs par défaut du Lab 4)
-    double epsilon = 1.0; // [cite: 104]
-    double sigma = 1.0;   // [cite: 104]
+    double epsilon = 1.0; 
+    double sigma = 1.0;  
 
     // 2. Boucle sur chaque particule de l'univers
     for (size_t i = 0; i < particules.size(); ++i) {
@@ -201,6 +262,7 @@ void Univers::calculerForces() {
             }
         }
     }
+
 }
 
 int Univers::getDimension() const {
@@ -322,8 +384,11 @@ void Univers::assignerParticulesAuxCellules() {
         int k = (dimension == 3) ? (pos.getZ() / rcut) : 0;
 
         int ncd_x = Ld.getX() / rcut;
+        if (ncd_x == 0) ncd_x = 1;
         int ncd_y = (dimension >= 2) ? (Ld.getY() / rcut) : 1;
+        if (ncd_y == 0) ncd_y = 1;
         int ncd_z = (dimension == 3) ? (Ld.getZ() / rcut) : 1;
+        if (ncd_z == 0) ncd_z = 1;
 
         if (i >= 0 && i < ncd_x && j >= 0 && j < ncd_y && k >= 0 && k < ncd_z) {
             int idx_cellule = (i * ncd_y + j) * ncd_z + k;

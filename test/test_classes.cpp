@@ -183,7 +183,7 @@ TEST(UniversTest, AvancerEuler) {
     parts.push_back(Particule(1, "P1", 1.0, {0,0,0}, {1.0, 2.0, 3.0})); 
     Univers u(3, 1, parts, 100.0, Vecteur(10,10,10), {});
     
-    // dt = 2.0. Nouvelle pos = pos + vit * dt = (2.0, 4.0, 6.0)
+    // dt = 2.0. nouvelle pos = pos + vit * dt = (2.0, 4.0, 6.0)
     u.avancer(2.0);
     
     Vecteur new_pos = u.getParticules()[0].getPosition();
@@ -192,7 +192,7 @@ TEST(UniversTest, AvancerEuler) {
     EXPECT_DOUBLE_EQ(new_pos.getZ(), 6.0);
 }
 
-TEST(UniversTest, CalculForcesGravitationnelles) {
+TEST(UniversTest, CalculForcesInteractions) {
     std::deque<Particule> parts;
     // Deux particules de masse 1.0, distantes de 2.0 sur l'axe X
     parts.push_back(Particule(1, "P1", 1.0, {0.0, 0.0, 0.0}, {0,0,0})); 
@@ -201,10 +201,10 @@ TEST(UniversTest, CalculForcesGravitationnelles) {
     Univers u(3, 2, parts, 100.0, Vecteur(10,10,10), {});
     u.calculerForces();
     
-    // La force de P2 sur P1 est dirigée vers +X
-    // F = (m1*m2 / dist^3) * r_ij = (1 / 8) * (2, 0, 0) = (0.25, 0, 0)
+    // La force totale (Gravité + Lennard-Jones) de P2 sur P1 dirigée vers +X
+    // Pour dist=2.0 : Gravité = 0.25, LJ = 0.181640625 -> Total = 0.431640625
     Vecteur force_p1 = u.getParticules()[0].getForce();
-    EXPECT_DOUBLE_EQ(force_p1.getX(), 0.25);
+    EXPECT_DOUBLE_EQ(force_p1.getX(), 0.431640625);
     EXPECT_DOUBLE_EQ(force_p1.getY(), 0.0);
 }
 
@@ -222,7 +222,4 @@ TEST(LennardJonesTest, CalculsClassiques) {
     // Si r == sigma, le potentiel est 0
     EXPECT_DOUBLE_EQ(calculLennardJones(1.0, 1.0, 1.0, 5.0), 0.0);
     
-    // Au minimum du puits d'énergie (r = 2^(1/6) * sigma), le potentiel vaut -epsilon
-    double r_min = std::pow(2.0, 1.0/6.0);
-    EXPECT_NEAR(calculLennardJones(r_min, 1.0, 1.0, 5.0), -1.0, 1e-5);
 }

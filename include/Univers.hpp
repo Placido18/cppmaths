@@ -95,6 +95,13 @@ class Univers {
         const std::deque<Particule>& getParticules() const;
 
         /**
+         * @brief Sauvegarde l'état actuel de l'univers au format VTK (XML).
+         * 
+         * @param iteration Le numéro de l'itération actuelle (pour nommer le fichier).
+         */
+        void sauvegarderVTK(int iteration) const;
+
+        /**
          * @brief Initialise le maillage des cellules dans l'univers.
          * 
          * À appeler au début de la simulation.

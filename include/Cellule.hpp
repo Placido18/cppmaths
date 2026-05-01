@@ -50,7 +50,7 @@ class Cellule{
          * @brief Récupère la liste des particules présentes dans cette cellule.
          * @return Un vecteur de pointeurs vers les particules contenues.
          */
-        std::vector<Particule*> getParticules() const;
+        const std::vector<Particule*>& getParticules() const;
 
         /**
          * @brief Récupère le centre de la cellule.
