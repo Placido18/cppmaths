@@ -47,3 +47,4 @@ Vecteur Vecteur::operator+=(const Vecteur& v) {
     z += v.z;
     return *this;
 }
+

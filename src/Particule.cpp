@@ -4,7 +4,7 @@
  */
 
 #include "Particule.hpp"
-
+    
 Particule::Particule(int id, std::string type, double masse, Vecteur pos, Vecteur vitesse) {
     this->id = id;
     this->type = type;

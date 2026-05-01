@@ -18,30 +18,46 @@ Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particu
     this->Ld = Ld;
     this->cellules = cellules;
 
-    
 
 }
 
-// pas encore mis l'impact des forces
 void Univers::avancer(double dt) {
+    // Calcul des dimensions de la grille (limites)
+    int ncd_x = Ld.getX() / rcut;
+    int ncd_y = (dimension >= 2) ? (int)(Ld.getY() / rcut) : 1;
+    int ncd_z = (dimension == 3) ? (int)(Ld.getZ() / rcut) : 1;
+
     for (auto& p : particules) {
-        Vecteur pos = p.getPosition();
-        Vecteur vit = p.getVitesse();
+        // 1. Calcul des indices de cellule AVANT le déplacement
+        Vecteur ancienne_pos = p.getPosition();
+        int i_old = ancienne_pos.getX() / rcut;
+        int j_old = (dimension >= 2) ? (int)(ancienne_pos.getY() / rcut) : 0;
+        int k_old = (dimension == 3) ? (int)(ancienne_pos.getZ() / rcut) : 0;
 
-        double new_x = pos.getX() + vit.getX() * dt;
-        double new_y = pos.getY();
-        double new_z = pos.getZ();
+        // 2. Déplacement physique de la particule
+        p.updatePosition(dt);
 
-        if (dimension >= 2) {
-            new_y += vit.getY() * dt;
+        // 3. Calcul des indices de cellule APRES le déplacement
+        Vecteur nouvelle_pos = p.getPosition();
+        int i_new = nouvelle_pos.getX() / rcut;
+        int j_new = (dimension >= 2) ? (int)(nouvelle_pos.getY() / rcut) : 0;
+        int k_new = (dimension == 3) ? (int)(nouvelle_pos.getZ() / rcut) : 0;
+
+        // 4. Détection du changement de cellule
+        if (i_old != i_new || j_old != j_new || k_old != k_new) {
+            
+            // Retrait de l'ancienne cellule (si elle était bien dans le domaine spatial)
+            if (i_old >= 0 && i_old < ncd_x && j_old >= 0 && j_old < ncd_y && k_old >= 0 && k_old < ncd_z) {
+                int idx_old = (i_old * ncd_y + j_old) * ncd_z + k_old;
+                cellules[idx_old].removeParticule(&p);
+            }
+
+            // Ajout à la nouvelle cellule (si elle ne sort pas des limites du domaine spatial)
+            if (i_new >= 0 && i_new < ncd_x && j_new >= 0 && j_new < ncd_y && k_new >= 0 && k_new < ncd_z) {
+                int idx_new = (i_new * ncd_y + j_new) * ncd_z + k_new;
+                cellules[idx_new].addParticule(&p);
+            }
         }
-
-        if (dimension >= 3) {
-            new_z += vit.getZ() * dt;
-        }
-
-        Vecteur new_pos(new_x, new_y, new_z);
-        p.setPosition(new_pos);
     }
 }
 
@@ -80,7 +96,7 @@ void Univers::evoluerVerlet(double dt, double t_end) {
         t += dt;
         
         // 1. Mise à jour des positions
-        for (auto& p : particules) { p.updatePosition(dt); }
+        avancer(dt);
         
         // Sauvegarde dans le fichier
         if (fichier.is_open()) {
@@ -117,43 +133,74 @@ void Univers::appliquerVitesse(double vitesse) {
 }
 
 void Univers::calculerForces() {
-    // Remise à zéro des forces avant chaque calcul
+    // 1. Remise à zéro des forces pour toutes les particules
     for (auto& p : particules) {
         p.setForce({0.0, 0.0, 0.0});
     }
     
-    for (size_t i = 0; i < particules.size() - 1; ++i) {
-        //position de la particule courante
+    // Paramètres pour Lennard-Jones (valeurs par défaut du Lab 4)
+    double epsilon = 1.0; // [cite: 104]
+    double sigma = 1.0;   // [cite: 104]
+
+    // 2. Boucle sur chaque particule de l'univers
+    for (size_t i = 0; i < particules.size(); ++i) {
         Vecteur pos_i = particules[i].getPosition();
 
-        //on doit parcourir toutes les cellules du voisinage de la cellule de la particule i
-        //cad les cellules dont le centre est à une distance inférieure à rcut de la cellule de la particule i
+        // 3. Parcours de TOUTES les cellules de l'univers pour tester la distance au centre
+        for (Cellule& cell : cellules) {
+            // On calcule la distance entre la particule i et le centre de la cellule 
+            Vecteur centre_cell = cell.getCentre(); // Suppose l'existence de ce getter
+            Vecteur diff_cell = centre_cell - pos_i;
+            double dist_cell = std::sqrt(diff_cell.getX() * diff_cell.getX() + 
+                                         diff_cell.getY() * diff_cell.getY() + 
+                                         diff_cell.getZ() * diff_cell.getZ());
 
+            // Test demandé : si la cellule est dans le voisinage (distance <= rcut) 
+            if (dist_cell <= rcut) {
+                // On examine les particules de cette cellule
+                for (Particule* p_j : cell.getParticules()) {
+                    
+                    // Éviter l'auto-interaction et le double calcul des paires
+                    if (&particules[i] >= p_j) continue;
 
-        
-        //On ne fait ca que pour les particules qui appartiennent aux cellules qui se situe dans le voisinage de la cellule de la particule
-        for (size_t j = i + 1; j < particules.size(); ++j) {
-            
-            Vecteur pos_j = particules[j].getPosition();
-            Vecteur r_ij = pos_j - pos_i;
-            double distance = std::sqrt(r_ij.getX() * r_ij.getX() + r_ij.getY() * r_ij.getY() + r_ij.getZ() * r_ij.getZ());
-            double m_i = particules[i].getMasse();
-            double m_j = particules[j].getMasse();
-            if (distance > 0) {
-                double facteur_force = (m_i * m_j) / (distance * distance * distance);
-                // creation du vecteur forve ij;
-                Vecteur force_ij = {
-                    facteur_force * r_ij.getX(),
-                    facteur_force * r_ij.getY(),
-                    facteur_force * r_ij.getZ()
-                };
-                particules[i].ajouterForce(force_ij);
-                Vecteur force_ji = force_ij * -1;
-                particules[j].ajouterForce(force_ji);
+                    Vecteur pos_j = p_j->getPosition();
+                    Vecteur r_ij = pos_j - pos_i;
+                    double dist_sq = r_ij.getX() * r_ij.getX() + 
+                                     r_ij.getY() * r_ij.getY() + 
+                                     r_ij.getZ() * r_ij.getZ();
+                    double distance = std::sqrt(dist_sq);
+
+                    // Calcul de la force si le rayon de coupure est respecté entre les particules [cite: 123, 138]
+                    if (distance > 0 && distance <= rcut) {
+                        
+                        // Force de Gravité [cite: 322]
+                        double m_i = particules[i].getMasse();
+                        double m_j = p_j->getMasse();
+                        double facteur_gravite = (m_i * m_j) / (distance * distance * distance);
+                        
+                        // Force de Lennard-Jones [cite: 112]
+                        double sr = sigma / distance;
+                        double sr6 = std::pow(sr, 6);
+                        double facteur_LJ = 24.0 * epsilon * (1.0 / (distance * distance)) * sr6 * (1.0 - 2.0 * sr6);
+
+                        // Somme des forces élémentaires [cite: 113, 114]
+                        double facteur_total = facteur_gravite + facteur_LJ;
+
+                        Vecteur force_ij = {
+                            facteur_total * r_ij.getX(),
+                            facteur_total * r_ij.getY(),
+                            facteur_total * r_ij.getZ()
+                        };
+                        
+                        // Application de la force (Action / Réaction)
+                        particules[i].ajouterForce(force_ij);
+                        force_ij = force_ij * (-1); // Force opposée pour p_j
+                        p_j->ajouterForce(force_ij);
+                    }
+                }
             }
         }
     }
-
 }
 
 int Univers::getDimension() const {
