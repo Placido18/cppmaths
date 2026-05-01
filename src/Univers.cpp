@@ -1,6 +1,12 @@
+/**
+ * @file Univers.cpp
+ * @brief Implémentation de la classe Univers et de la simulation physique.
+ */
+
 #include "Univers.hpp"
 #include <iostream>
 #include <cmath>
+#include <fstream>
 
 
 /// on utilise deque pour la collection de particules car elle possède les meilleures performances (voir comparaison avec list et vector dand le main)
@@ -65,6 +71,38 @@ void Univers::evoluer(double dt, double t_end) {
     }
 }
 
+void Univers::evoluerVerlet(double dt, double t_end) {
+    double t = 0.0;
+    std::ofstream fichier("positions.txt");
+    calculerForces();
+
+    while (t < t_end) {
+        t += dt;
+        
+        // 1. Mise à jour des positions
+        for (auto& p : particules) { p.updatePosition(dt); }
+        
+        // Sauvegarde dans le fichier
+        if (fichier.is_open()) {
+            fichier << t << " ";
+            for (const auto& p : particules) {
+                fichier << p.getPosition().getX() << " " << p.getPosition().getY() << " " << p.getPosition().getZ() << " ";
+            }
+            fichier << "\n";
+        }
+
+        // 2. Sauvegarde des anciennes forces et calcul des nouvelles
+        std::deque<Vecteur> f_old;
+        for (auto& p : particules) { f_old.push_back(p.getForce()); }
+        calculerForces();
+        
+        // 3. Mise à jour des vitesses
+        for (size_t i = 0; i < particules.size(); ++i) {
+            particules[i].updateVitesse(dt, f_old[i]);
+        }
+    }
+}
+
 // les particules ont la même vitesse
 void Univers::appliquerVitesse(double vitesse) {
     for (auto& p : particules) {
@@ -79,7 +117,10 @@ void Univers::appliquerVitesse(double vitesse) {
 }
 
 void Univers::calculerForces() {
-
+    // Remise à zéro des forces avant chaque calcul
+    for (auto& p : particules) {
+        p.setForce({0.0, 0.0, 0.0});
+    }
     
     for (size_t i = 0; i < particules.size() - 1; ++i) {
         //position de la particule courante

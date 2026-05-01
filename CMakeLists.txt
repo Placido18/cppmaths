@@ -4,11 +4,8 @@ project(ProjetCpp_Neuilly_Meniane)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# on crée une bibliothèque
-add_library(librairie
-    src/Particule.cpp
-    src/Vecteur.cpp
-    src/Univers.cpp)
+file(GLOB SRC_FILES CONFIGURE_DEPENDS "src/*.cpp")
+add_library(librairie ${SRC_FILES})
 
 target_include_directories(librairie PUBLIC include)
 

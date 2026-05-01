@@ -1,3 +1,8 @@
+/**
+ * @file Particule.cpp
+ * @brief Code source définissant les comportements d'une Particule.
+ */
+
 #include "Particule.hpp"
 
 Particule::Particule(int id, std::string type, double masse, Vecteur pos, Vecteur vitesse) {
@@ -28,4 +33,24 @@ void Particule::setForce(const Vecteur& f) { force = f; }
 
 void Particule::ajouterForce(Vecteur& f) {
     force += f;
+}
+
+void Particule::updatePosition(double dt) {
+    double m = getMasse();
+    Vecteur new_pos = {
+        position.getX() + dt * (vitesse.getX() + 0.5 / m * force.getX() * dt),
+        position.getY() + dt * (vitesse.getY() + 0.5 / m * force.getY() * dt),
+        position.getZ() + dt * (vitesse.getZ() + 0.5 / m * force.getZ() * dt)
+    };
+    setPosition(new_pos);
+}
+
+void Particule::updateVitesse(double dt, const Vecteur& ancienne_force) {
+    double m = getMasse();
+    Vecteur new_vit = {
+        vitesse.getX() + dt * (0.5 / m) * (force.getX() + ancienne_force.getX()),
+        vitesse.getY() + dt * (0.5 / m) * (force.getY() + ancienne_force.getY()),
+        vitesse.getZ() + dt * (0.5 / m) * (force.getZ() + ancienne_force.getZ())
+    };
+    setVitesse(new_vit);
 }

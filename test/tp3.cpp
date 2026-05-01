@@ -1,3 +1,11 @@
+/**
+ * @file tp3.cpp
+ * @brief Tests de performances pour le calcul des forces (Questions 7 et 8).
+ * 
+ * Évalue les performances temporelles de l'algorithme de calcul des interactions
+ * en fonction du nombre de particules générées aléatoirement.
+ */
+
 #include <iostream>
 #include <deque>
 #include <random>
@@ -6,12 +14,14 @@
 #include <vector>
 #include "Univers.hpp"
 #include "Particule.hpp"
-// Ajout de Cellule.hpp au cas où il ne serait pas inclus en cascade
-#include "Cellule.hpp" 
 
 /**
- * Fonction utilitaire pour générer un Univers aléatoire
- * Les particules sont uniformément distribuées sur le cube [0, 1]^3
+ * @brief Génère un Univers avec une distribution aléatoire de particules.
+ * 
+ * Les particules sont uniformément distribuées sur le cube [0, 1]^3 (Question 6).
+ * 
+ * @param k Puissance déterminant le nombre total de particules = (2^k)^3.
+ * @return L'Univers initialisé aléatoirement.
  */
 Univers genererUniversAleatoire(int k) {
     int N_side = std::pow(2, k);
@@ -28,15 +38,14 @@ Univers genererUniversAleatoire(int k) {
         particules.push_back(Particule(i, "particule", 1.0, pos, vit));
     }
 
-    // --- CORRECTION ICI ---
-    // Ajout des paramètres manquants pour le nouveau constructeur du Lab 4
-    double rcut_defaut = 1.0;
-    Vecteur Ld_defaut(1.0, 1.0, 1.0); // Correspond au cube [0, 1]^3
-    std::vector<Cellule> cellules_vides;
-
-    return Univers(3, total_particles, particules, rcut_defaut, Ld_defaut, cellules_vides);
+    return Univers(3, total_particles, particules);
 }
 
+/**
+ * @brief Point d'entrée des tests TP3.
+ * 
+ * @return 0 si les tests se sont terminés correctement.
+ */
 int main() {
     std::cout << "test performance" << std::endl;
 

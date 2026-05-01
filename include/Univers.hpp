@@ -69,6 +69,13 @@ class Univers {
         void evoluer(double dt, double t_end);
 
         /**
+         * @brief Fait évoluer le système avec l'algorithme de Störmer-Verlet (TP2).
+         * @param dt Pas de temps d'itération.
+         * @param t_end Temps final d'arrêt.
+         */
+        void evoluerVerlet(double dt, double t_end);
+
+        /**
          * @brief Applique une vitesse scalaire uniforme à toutes les particules.
          * @param vitesse Vitesse scalaire à appliquer.
          */

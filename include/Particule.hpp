@@ -82,6 +82,19 @@ class Particule{
          * @param f Vecteur force à ajouter.
          */
         void ajouterForce(Vecteur& f);
+
+        /**
+         * @brief Met à jour la position selon l'algorithme de Störmer-Verlet.
+         * @param dt Pas de temps.
+         */
+        void updatePosition(double dt);
+
+        /**
+         * @brief Met à jour la vitesse selon l'algorithme de Störmer-Verlet.
+         * @param dt Pas de temps.
+         * @param ancienne_force Force à l'étape précédente.
+         */
+        void updateVitesse(double dt, const Vecteur& ancienne_force);
 };
 
 #endif

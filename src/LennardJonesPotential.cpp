@@ -1,7 +1,21 @@
+/**
+ * @file LennardJonesPotential.cpp
+ * @brief Implémentation du potentiel de Lennard-Jones.
+ */
+
 #include <iostream>
 #include <cmath>
 #include <fstream>
 
+/**
+ * @brief Calcule le potentiel de Lennard-Jones entre deux particules.
+ * 
+ * @param r Distance entre les particules.
+ * @param epsilon Profondeur du puits de potentiel.
+ * @param sigma Distance à laquelle le potentiel interparticulaire est nul.
+ * @param rcut Rayon de coupure pour limiter la portée des interactions.
+ * @return La valeur calculée du potentiel (0 si r > rcut).
+ */
 double calculLennardJones(double r, double epsilon, double sigma, double rcut) {
     if (r > rcut) {
         return 0; // Potentiel nul au-delà de la distance de coupure    
