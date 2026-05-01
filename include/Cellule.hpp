@@ -56,12 +56,13 @@ class Cellule{
          * @brief Récupère le centre de la cellule.
          * @return Un vecteur représentant le centre géométrique de la cellule.
          */
-        Vecteur getCentre() const { return centre; }
+        Vecteur getCentre() const;
 
         /**
          * @brief Retire une particule de cette cellule.
          * @param p Pointeur vers la particule à retirer.
-         */void removeParticule(Particule* p);
+         */
+        void removeParticule(Particule* p);
 
 };
 
