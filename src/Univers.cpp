@@ -200,6 +200,8 @@ void Univers::calculerForces() {
     }
     
     // Paramètres pour Lennard-Jones (valeurs par défaut du Lab 4)
+    double epsilon = 5.0; // [cite: 104]
+    double sigma = 1.0;   // [cite: 104]
     double epsilon = 1.0; 
     double sigma = 1.0;  
 
