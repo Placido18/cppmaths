@@ -64,6 +64,11 @@ class Cellule{
          */
         void removeParticule(Particule* p);
 
+        /**
+         * @brief Vide la liste des particules de cette cellule.
+         */
+        void clearParticules();
+
 };
 
 

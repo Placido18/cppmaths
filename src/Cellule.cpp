@@ -30,3 +30,7 @@ const std::vector<Particule*>& Cellule::getParticules() const {
 std::vector<Cellule*> Cellule::getVoisines() const {
     return voisines;
 }
+
+void Cellule::clearParticules() {
+    particules.clear();
+}
