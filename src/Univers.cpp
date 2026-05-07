@@ -20,11 +20,23 @@ Univers::Univers(int dimension, int nb_particules, std::deque<Particule> particu
     this->Ld = Ld;
     this->cellules = cellules;
 
+    this->epsilon    = 5.0;
+    this->sigma      = 1.0;
+    this->use_gravity = false;
+    this->use_LJ     = true;
+
     // Auto-initialisation de la grille si elle est vide
     if (this->cellules.empty()) {
         initialiserMaillage();
         assignerParticulesAuxCellules();
     }
+}
+
+void Univers::setPhysicsParams(double eps, double sig, bool gravity, bool lj) {
+    epsilon     = eps;
+    sigma       = sig;
+    use_gravity = gravity;
+    use_LJ      = lj;
 }
 
 void Univers::avancer(double dt) {
@@ -96,27 +108,32 @@ void Univers::evoluer(double dt, double t_end) {
     }
 }
 
-void Univers::evoluerVerlet(double dt, double t_end) {
+void Univers::evoluerVerlet(double dt, double t_end, int vtk_freq) {
     double t = 0.0;
     int iteration = 0;
-    int frame_vtk = 0; // Compteur pour les fichiers générés
-    std::ofstream fichier("positions.txt");
+    int frame_vtk = 0;
+    // positions.txt : uniquement pour les petits systèmes (gravitationnel)
+    std::ofstream fichier;
+    if (particules.size() <= 100) {
+        fichier.open("positions.txt");
+    }
     calculerForces();
-    
+
     sauvegarderVTK(frame_vtk++);
 
     while (t < t_end) {
         t += dt;
         iteration++;
-        
+
         // 1. Mise à jour des positions
         avancer(dt);
-        
-        // Sauvegarde dans le fichier
+
         if (fichier.is_open()) {
             fichier << t << " ";
             for (const auto& p : particules) {
-                fichier << p.getPosition().getX() << " " << p.getPosition().getY() << " " << p.getPosition().getZ() << " ";
+                fichier << p.getPosition().getX() << " "
+                        << p.getPosition().getY() << " "
+                        << p.getPosition().getZ() << " ";
             }
             fichier << "\n";
         }
@@ -131,8 +148,7 @@ void Univers::evoluerVerlet(double dt, double t_end) {
             particules[i].updateVitesse(dt, f_old[i]);
         }
         
-        // Sauvegarde VTK pour Paraview (1 fois toutes les 100 itérations, sinon y'en a trop)
-        if (iteration % 100 == 0) {
+        if (iteration % vtk_freq == 0) {
             sauvegarderVTK(frame_vtk++);
         }
     }
@@ -181,6 +197,11 @@ void Univers::sauvegarderVTK(int iteration) const {
         out << "          " << p.getMasse() << "\n";
     }
     out << "        </DataArray>\n";
+    out << "        <DataArray type=\"Int32\" Name=\"Groupe\" format=\"ascii\">\n";
+    for (const auto& p : particules) {
+        out << "          " << (p.getType() == "rouge" ? 1 : 0) << "\n";
+    }
+    out << "        </DataArray>\n";
     out << "      </PointData>\n";
     
     out << "      <Cells>\n";
@@ -194,76 +215,55 @@ void Univers::sauvegarderVTK(int iteration) const {
 }
 
 void Univers::calculerForces() {
-    // 1. Remise à zéro des forces pour toutes les particules
     for (auto& p : particules) {
         p.setForce({0.0, 0.0, 0.0});
     }
-    
-    // Paramètres pour Lennard-Jones (valeurs par défaut du Lab 4)
-    double epsilon = 5.0;
-    double sigma = 1.0;
 
+    // Calcule et applique la force entre deux particules (action-réaction)
+    auto applyPair = [&](Particule& pi, Particule& pj) {
+        Vecteur r_ij = pj.getPosition() - pi.getPosition();
+        double dist_sq = r_ij.getX()*r_ij.getX() + r_ij.getY()*r_ij.getY() + r_ij.getZ()*r_ij.getZ();
+        if (dist_sq <= 0.0 || dist_sq > rcut*rcut) return;
+        double dist = std::sqrt(dist_sq);
 
-    // 2. Boucle sur chaque particule de l'univers
-    for (size_t i = 0; i < particules.size(); ++i) {
-        Vecteur pos_i = particules[i].getPosition();
+        double facteur = 0.0;
 
-        // 3. Parcours de TOUTES les cellules de l'univers pour tester la distance au centre
-        for (Cellule& cell : cellules) {
-            // On calcule la distance entre la particule i et le centre de la cellule 
-            Vecteur centre_cell = cell.getCentre(); // Suppose l'existence de ce getter
-            Vecteur diff_cell = centre_cell - pos_i;
-            double dist_cell = std::sqrt(diff_cell.getX() * diff_cell.getX() + 
-                                         diff_cell.getY() * diff_cell.getY() + 
-                                         diff_cell.getZ() * diff_cell.getZ());
+        if (use_gravity) {
+            facteur += (pi.getMasse() * pj.getMasse()) / (dist * dist_sq);
+        }
 
-            // Test demandé : si la cellule est dans le voisinage (distance <= rcut) 
-            if (dist_cell <= rcut) {
-                // On examine les particules de cette cellule
-                for (Particule* p_j : cell.getParticules()) {
-                    
-                    // Éviter l'auto-interaction et le double calcul des paires
-                    if (&particules[i] >= p_j) continue;
+        if (use_LJ) {
+            double sr  = sigma / dist;
+            double sr6 = sr*sr*sr*sr*sr*sr;
+            facteur += 24.0 * epsilon / dist_sq * sr6 * (1.0 - 2.0*sr6);
+        }
 
-                    Vecteur pos_j = p_j->getPosition();
-                    Vecteur r_ij = pos_j - pos_i;
-                    double dist_sq = r_ij.getX() * r_ij.getX() + 
-                                     r_ij.getY() * r_ij.getY() + 
-                                     r_ij.getZ() * r_ij.getZ();
-                    double distance = std::sqrt(dist_sq);
+        Vecteur f = r_ij * facteur;
+        pi.ajouterForce(f);
+        pj.ajouterForce(f * (-1.0));
+    };
 
-                    // Calcul de la force si le rayon de coupure est respecté entre les particules [cite: 123, 138]
-                    if (distance > 0 && distance <= rcut) {
-                        
-                        // Force de Gravité [cite: 322]
-                        double m_i = particules[i].getMasse();
-                        double m_j = p_j->getMasse();
-                        double facteur_gravite = (m_i * m_j) / (distance * distance * distance);
-                        
-                        // Force de Lennard-Jones [cite: 112]
-                        double sr = sigma / distance;
-                        double sr6 = std::pow(sr, 6);
-                        double facteur_LJ = 24.0 * epsilon * (1.0 / (distance * distance)) * sr6 * (1.0 - 2.0 * sr6);
+    // Parcours des cellules : paires intra-cellule et paires avec voisines (demi-coquille)
+    for (Cellule& cell : cellules) {
+        const auto& parts = cell.getParticules();
 
-                        // Somme des forces élémentaires [cite: 113, 114]
-                        double facteur_total = facteur_gravite + facteur_LJ;
+        for (size_t a = 0; a < parts.size(); ++a) {
+            for (size_t b = a + 1; b < parts.size(); ++b) {
+                applyPair(*parts[a], *parts[b]);
+            }
+        }
 
-                        Vecteur force_ij = {
-                            facteur_total * r_ij.getX(),
-                            facteur_total * r_ij.getY(),
-                            facteur_total * r_ij.getZ()
-                        };
-                        
-                        // Application de la force (Action / Réaction)
-                        particules[i].ajouterForce(force_ij);
-                        force_ij = force_ij * (-1); // Force opposée pour p_j
-                        p_j->ajouterForce(force_ij);
+        // On ne traite chaque paire de cellules voisines qu'une seule fois
+        for (Cellule* neigh : cell.getVoisines()) {
+            if (neigh > &cell) {
+                for (Particule* pi : parts) {
+                    for (Particule* pj : neigh->getParticules()) {
+                        applyPair(*pi, *pj);
                     }
                 }
             }
         }
     }
-
 }
 
 int Univers::getDimension() const {

@@ -29,9 +29,12 @@ class Univers {
 
         //un univers possède une liste de cellules
         std::vector<Cellule> cellules;
-        //std::array<Cellule, dimension*dimension*dimension> cellules; check
-        
-        
+
+        double epsilon;
+        double sigma;
+        bool use_gravity;
+        bool use_LJ;
+
     public:
         /**
          * @brief Constructeur de l'Univers.
@@ -73,7 +76,16 @@ class Univers {
          * @param dt Pas de temps d'itération.
          * @param t_end Temps final d'arrêt.
          */
-        void evoluerVerlet(double dt, double t_end);
+        void evoluerVerlet(double dt, double t_end, int vtk_freq = 100);
+
+        /**
+         * @brief Configure les paramètres physiques de la simulation.
+         * @param eps Profondeur du potentiel Lennard-Jones.
+         * @param sig Distance d'interaction Lennard-Jones.
+         * @param gravity Active la force gravitationnelle.
+         * @param lj Active le potentiel de Lennard-Jones.
+         */
+        void setPhysicsParams(double eps, double sig, bool gravity = false, bool lj = true);
 
         /**
          * @brief Applique une vitesse scalaire uniforme à toutes les particules.

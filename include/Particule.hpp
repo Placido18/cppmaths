@@ -35,7 +35,7 @@ class Particule{
          * @param pos Vecteur position initiale.
          * @param vitesse Vecteur vitesse initiale.
          */
-        Particule(int id, std::string type, double masse, Vecteur pos, Vecteur vitesse);
+        Particule(int id, const std::string& type, double masse, const Vecteur& pos, const Vecteur& vitesse);
 
         // Getters
         /**
@@ -81,7 +81,7 @@ class Particule{
          * @brief Ajoute une force au vecteur force actuel.
          * @param f Vecteur force à ajouter.
          */
-        void ajouterForce(Vecteur& f);
+        void ajouterForce(const Vecteur& f);
 
         /**
          * @brief Met à jour la position selon l'algorithme de Störmer-Verlet.

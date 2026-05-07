@@ -5,7 +5,7 @@
 
 #include "Particule.hpp"
     
-Particule::Particule(int id, std::string type, double masse, Vecteur pos, Vecteur vitesse) {
+Particule::Particule(int id, const std::string& type, double masse, const Vecteur& pos, const Vecteur& vitesse) {
     this->id = id;
     this->type = type;
     this->masse = masse;
@@ -31,7 +31,7 @@ void Particule::setPosition(const Vecteur& pos) { position = pos; }
 void Particule::setVitesse(const Vecteur& vit) { vitesse = vit; }
 void Particule::setForce(const Vecteur& f) { force = f; }
 
-void Particule::ajouterForce(Vecteur& f) {
+void Particule::ajouterForce(const Vecteur& f) {
     force += f;
 }
 

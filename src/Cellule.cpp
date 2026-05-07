@@ -26,3 +26,7 @@ Vecteur Cellule::getCentre() const {
 const std::vector<Particule*>& Cellule::getParticules() const {
     return particules;
 }
+
+std::vector<Cellule*> Cellule::getVoisines() const {
+    return voisines;
+}
