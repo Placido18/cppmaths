@@ -199,10 +199,14 @@ TEST(UniversTest, CalculForcesInteractions) {
     parts.push_back(Particule(2, "P2", 1.0, {2.0, 0.0, 0.0}, {0,0,0})); 
     
     Univers u(3, 2, parts, 100.0, Vecteur(10,10,10), {});
+    // epsilon=1, sigma=1, gravité+LJ : valeurs attendues dans le commentaire ci-dessous
+    u.setPhysicsParams(1.0, 1.0, /*gravity=*/true, /*lj=*/true);
     u.calculerForces();
-    
+
     // La force totale (Gravité + Lennard-Jones) de P2 sur P1 dirigée vers +X
-    // Pour dist=2.0 : Gravité = 0.25, LJ = 0.181640625 -> Total = 0.431640625
+    // Pour dist=2.0 : Gravité = m²/r³·rx = 1/8·2 = 0.25
+    //                 LJ = 24·ε/r²·(σ/r)⁶·(1-2(σ/r)⁶)·rx = 24/4·(1/64)·(62/64)·2 ≈ 0.181640625
+    //                 Total = 0.431640625
     Vecteur force_p1 = u.getParticules()[0].getForce();
     EXPECT_DOUBLE_EQ(force_p1.getX(), 0.431640625);
     EXPECT_DOUBLE_EQ(force_p1.getY(), 0.0);

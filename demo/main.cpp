@@ -99,6 +99,21 @@ void simulationCollision() {
 }
 
 int main() {
-    simulationCollision();
+    // Choix de la simulation à exécuter
+    std::cout << "Choisissez la simulation à exécuter:" << std::endl;
+    std::cout << "1. Simulation gravitationnelle du système solaire" << std::endl;
+    std::cout << "2. Simulation de collision entre deux objets (Lennard-Jones)" << std::endl;
+    std::cout << "Entrez votre choix (1 ou 2): ";
+    int choix;
+    std::cin >> choix;
+
+    if (choix == 1) {
+        simulationSolaire();
+    } else if (choix == 2) {
+        simulationCollision();
+    } else {
+        std::cerr << "Choix invalide." << std::endl;
+    }
+
     return 0;
 }
