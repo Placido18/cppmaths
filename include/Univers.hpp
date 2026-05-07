@@ -174,27 +174,16 @@ class Univers {
         void assignerParticulesAuxCellules() ;
 
     private:
-        /**
-         * @brief Renvoie le nombre de cellules dans chaque direction {nx, ny, nz}.
-         */
+        // Nombre de cellules par direction {nx, ny, nz} — centralisé pour éviter la duplication
         std::array<int, 3> dimensionsMaillage() const;
 
-        /**
-         * @brief Applique les forces externes (champ gravitationnel, potentiel de paroi).
-         *
-         * Séparé de calculerForces() pour limiter la responsabilité de chaque méthode.
-         */
+        // Forces extérieures : champ gravitationnel uniforme + potentiel de paroi (Q3, Q5)
         void appliquerForcesExternes();
 
-        /**
-         * @brief Rescale les vitesses de toutes les particules vers l'énergie cinétique cible.
-         */
+        // Rescale les vitesses pour ramener Ec vers Ec_cible (Q6)
         void rescalerVitesses();
 
-        /**
-         * @brief Calcule l'énergie cinétique totale du système.
-         * @return L'énergie cinétique Ec = 0.5 * sum(m_i * v_i²).
-         */
+        // Calcule l'énergie cinétique totale Ec = 0.5 * sum(m_i * v_i^2)
         double calculerEnergieCinetique() const;
 };
 
