@@ -1,6 +1,7 @@
 #ifndef UNIVERS_HPP
 #define UNIVERS_HPP
 #include <deque>
+#include <array>
 #include "Particule.hpp"
 #include "Vecteur.hpp"
 #include "Cellule.hpp"
@@ -170,7 +171,31 @@ class Univers {
          *
          * À appeler après l'initialisation du maillage et après chaque déplacement.
          */
-        void assignerParticulesAuxCellules() ; // méthode pour assigner chaque particule à la cellule correspondante en fonction de sa position, à appeler après l'initialisation du maillage et après chaque déplacement des particules
+        void assignerParticulesAuxCellules() ;
+
+    private:
+        /**
+         * @brief Renvoie le nombre de cellules dans chaque direction {nx, ny, nz}.
+         */
+        std::array<int, 3> dimensionsMaillage() const;
+
+        /**
+         * @brief Applique les forces externes (champ gravitationnel, potentiel de paroi).
+         *
+         * Séparé de calculerForces() pour limiter la responsabilité de chaque méthode.
+         */
+        void appliquerForcesExternes();
+
+        /**
+         * @brief Rescale les vitesses de toutes les particules vers l'énergie cinétique cible.
+         */
+        void rescalerVitesses();
+
+        /**
+         * @brief Calcule l'énergie cinétique totale du système.
+         * @return L'énergie cinétique Ec = 0.5 * sum(m_i * v_i²).
+         */
+        double calculerEnergieCinetique() const;
 };
 
 #endif
