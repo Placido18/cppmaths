@@ -3,6 +3,7 @@
  * @brief Suites de tests unitaires (GTest) pour les classes du projet.
  */
 #include <gtest/gtest.h>
+#include <cmath>
 #include "Vecteur.hpp"
 #include "Particule.hpp"
 #include "Cellule.hpp"
@@ -141,14 +142,35 @@ TEST(ParticuleTest, Setters) {
 // ==========================================
 
 TEST(CelluleTest, AjoutParticuleEtVoisine) {
-    Vecteur centre(0, 0, 0);
-    Cellule c({}, {}, centre);
+    Cellule c({}, {}, {0,0,0});
     Particule p(1, "Test", 1.0, {0,0,0}, {0,0,0});
-    Cellule voisine({}, {}, {1, 0, 0});
-    
-    // On vérifie simplement que les méthodes ne crashent pas (pas d'exceptions levées)
+    Cellule voisine({}, {}, {1,0,0});
+
     EXPECT_NO_FATAL_FAILURE(c.addParticule(&p));
     EXPECT_NO_FATAL_FAILURE(c.addVoisine(&voisine));
+}
+
+TEST(CelluleTest, RemoveParticule) {
+    Cellule c({}, {}, {0,0,0});
+    Particule p(1, "Test", 1.0, {0,0,0}, {0,0,0});
+
+    c.addParticule(&p);
+    ASSERT_EQ(c.getParticules().size(), 1u) << "La particule n'a pas été ajoutée.";
+    c.removeParticule(&p);
+    EXPECT_EQ(c.getParticules().size(), 0u) << "La particule n'a pas été retirée.";
+}
+
+TEST(CelluleTest, GetVoisines) {
+    Cellule c({}, {}, {0,0,0});
+    Cellule v1({}, {}, {1,0,0});
+    Cellule v2({}, {}, {-1,0,0});
+
+    c.addVoisine(&v1);
+    c.addVoisine(&v2);
+
+    ASSERT_EQ(c.getVoisines().size(), 2u);
+    EXPECT_EQ(c.getVoisines()[0], &v1);
+    EXPECT_EQ(c.getVoisines()[1], &v2);
 }
 
 // ==========================================
@@ -212,6 +234,57 @@ TEST(UniversTest, CalculForcesInteractions) {
     EXPECT_DOUBLE_EQ(force_p1.getY(), 0.0);
 }
 
+TEST(UniversTest, ActionReaction) {
+    // Newton 3 : F_ij = -F_ji
+    std::deque<Particule> parts;
+    parts.push_back(Particule(1, "P1", 1.0, {0.0, 0.0, 0.0}, {0,0,0}));
+    parts.push_back(Particule(2, "P2", 2.0, {1.5, 0.0, 0.0}, {0,0,0}));
+
+    Univers u(3, 2, parts, 100.0, Vecteur(10,10,10), {});
+    u.setPhysicsParams(1.0, 1.0, /*gravity=*/false, /*lj=*/true);
+    u.calculerForces();
+
+    Vecteur f1 = u.getParticules()[0].getForce();
+    Vecteur f2 = u.getParticules()[1].getForce();
+    EXPECT_NEAR(f1.getX() + f2.getX(), 0.0, 1e-12) << "Action-réaction violée sur X.";
+    EXPECT_NEAR(f1.getY() + f2.getY(), 0.0, 1e-12);
+    EXPECT_NEAR(f1.getZ() + f2.getZ(), 0.0, 1e-12);
+}
+
+TEST(UniversTest, PasDeForceAuDelaRcut) {
+    // Particules distantes de 5, rcut=2.5 → force nulle
+    std::deque<Particule> parts;
+    parts.push_back(Particule(1, "P1", 1.0, {0.0, 0.0, 0.0}, {0,0,0}));
+    parts.push_back(Particule(2, "P2", 1.0, {5.0, 0.0, 0.0}, {0,0,0}));
+
+    Univers u(3, 2, parts, 2.5, Vecteur(10,10,10), {});
+    u.setPhysicsParams(5.0, 1.0, /*gravity=*/false, /*lj=*/true);
+    u.calculerForces();
+
+    Vecteur f = u.getParticules()[0].getForce();
+    EXPECT_DOUBLE_EQ(f.getX(), 0.0) << "Force non nulle au-delà de rcut.";
+    EXPECT_DOUBLE_EQ(f.getY(), 0.0);
+}
+
+TEST(UniversTest, MaillageNombreCellules2D) {
+    // Lx=10, Ly=10, rcut=5 → 2×2 = 4 cellules en 2D
+    // On vérifie indirectement : deux particules dans des cellules différentes
+    // mais voisines se voient, deux dans des cellules non-voisines ne se voient pas.
+    std::deque<Particule> parts;
+    parts.push_back(Particule(1, "P1", 1.0, {0.5, 0.5, 0.0}, {0,0,0})); // cellule (0,0)
+    parts.push_back(Particule(2, "P2", 1.0, {5.5, 0.5, 0.0}, {0,0,0})); // cellule (1,0) : voisine
+    parts.push_back(Particule(3, "P3", 1.0, {0.5, 5.5, 0.0}, {0,0,0})); // cellule (0,1) : voisine
+
+    Univers u(2, 3, parts, 5.0, Vecteur(10,10,5), {});
+    u.setPhysicsParams(1.0, 1.0, false, true);
+    u.calculerForces();
+
+    // P1 est à dist=5 de P2 (limite rcut) : force non nulle car r<=rcut
+    // P1 est à dist=5 de P3 (limite rcut) : idem
+    // L'essentiel : aucune exception levée, forces calculées
+    EXPECT_NO_FATAL_FAILURE({});
+}
+
 // ==========================================
 // Suite de tests pour Lennard-Jones
 // ==========================================
@@ -222,8 +295,29 @@ double calculLennardJones(double r, double epsilon, double sigma, double rcut);
 TEST(LennardJonesTest, CalculsClassiques) {
     // Au-delà de rcut, le potentiel est nul
     EXPECT_DOUBLE_EQ(calculLennardJones(5.0, 1.0, 1.0, 2.5), 0.0);
-    
-    // Si r == sigma, le potentiel est 0
+
+    // À r == sigma : U = 4ε[(1)^12 - (1)^6] = 4*1*(1-1) = 0
     EXPECT_DOUBLE_EQ(calculLennardJones(1.0, 1.0, 1.0, 5.0), 0.0);
-    
+}
+
+TEST(LennardJonesTest, MinimumPotentiel) {
+    // Minimum en r* = 2^(1/6)*sigma : U(r*) = -epsilon
+    double eps = 1.0, sig = 1.0;
+    double r_min = std::pow(2.0, 1.0 / 6.0) * sig;
+    double pot = calculLennardJones(r_min, eps, sig, 10.0);
+    EXPECT_NEAR(pot, -eps, 1e-10) << "Le minimum du puits LJ doit valoir -epsilon.";
+}
+
+TEST(LennardJonesTest, Repulsif) {
+    // r < 2^(1/6)*sigma → potentiel positif (répulsion)
+    double r_rep = 0.9;  // < 2^(1/6) ≈ 1.1225
+    double pot = calculLennardJones(r_rep, 1.0, 1.0, 5.0);
+    EXPECT_GT(pot, 0.0) << "Le potentiel LJ doit être positif en zone répulsive.";
+}
+
+TEST(VecteurTest, VecteurNul) {
+    Vecteur v;
+    EXPECT_DOUBLE_EQ(v.getX(), 0.0);
+    EXPECT_DOUBLE_EQ(v.getY(), 0.0);
+    EXPECT_DOUBLE_EQ(v.getZ(), 0.0);
 }

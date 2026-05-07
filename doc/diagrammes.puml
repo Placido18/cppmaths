@@ -1,0 +1,174 @@
+@startuml cas_utilisation
+' ── Q4 : Diagramme des cas d'utilisation ──────────────────────────────
+title Diagramme des cas d'utilisation – Simulation moléculaire
+
+actor "Physicien /\nIngénieur" as User
+
+rectangle "Système de simulation" {
+    usecase "Configurer les\nparamètres (ε, σ, rcut, dt)" as UC1
+    usecase "Créer les particules\n(position, vitesse, masse)"  as UC2
+    usecase "Lancer la simulation\nStörmer-Verlet"             as UC3
+    usecase "Calculer les forces\n(LJ / Gravité)"              as UC4
+    usecase "Mettre à jour les\ncellules spatiales"            as UC5
+    usecase "Exporter les données\nau format VTK"              as UC6
+    usecase "Visualiser dans\nParaView"                        as UC7
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC7
+
+UC3 ..> UC4 : <<include>>
+UC3 ..> UC5 : <<include>>
+UC3 ..> UC6 : <<include>>
+UC6 ..> UC7 : <<extend>>
+@enduml
+
+
+@startuml sequence
+' ── Q5 : Diagramme de séquence ────────────────────────────────────────
+title Diagramme de séquence – evoluerVerlet(dt, t_end)
+
+actor Utilisateur
+participant "Univers"   as U
+participant "Cellule"   as C
+participant "Particule" as P
+participant "Fichier\nVTK"  as VTK
+
+Utilisateur -> U : evoluerVerlet(dt, t_end)
+activate U
+
+U -> U : calculerForces()
+activate U
+  loop chaque paire (i,j) dans cellule et voisines
+    U -> P : getPosition()
+    U -> P : ajouterForce(F_ij)
+    U -> P : ajouterForce(-F_ij)
+  end
+deactivate U
+
+U -> VTK : sauvegarderVTK(0)
+
+loop t < t_end
+    U -> U : avancer(dt)
+    activate U
+      loop chaque particule p
+        U -> P : updatePosition(dt)
+        U -> C : removeParticule(p) [si changement de cellule]
+        U -> C : addParticule(p)    [si changement de cellule]
+      end
+    deactivate U
+
+    U -> U : sauvegarder f_old
+    U -> U : calculerForces()
+
+    loop chaque particule i
+        U -> P : updateVitesse(dt, f_old[i])
+    end
+
+    opt iteration % vtk_freq == 0
+        U -> VTK : sauvegarderVTK(frame++)
+    end
+end
+
+U --> Utilisateur : simulation terminée
+deactivate U
+@enduml
+
+
+@startuml transitions
+' ── Q6 : Diagramme de transitions ─────────────────────────────────────
+title Diagramme de transitions – Cycle de vie de la simulation
+
+[*] --> Initialisation : new Univers(...)
+
+Initialisation --> MaillageCreé     : initialiserMaillage()
+MaillageCreé    --> ParticulesAssignées : assignerParticulesAuxCellules()
+ParticulesAssignées --> ForcesCalculées : calculerForces()
+
+ForcesCalculées --> PositionsMàJ : avancer(dt)\nupdatePosition
+PositionsMàJ    --> CellulesàJour : reassignation\nparticules
+CellulesàJour   --> NouvellesForcesCalculées : calculerForces()
+NouvellesForcesCalculées --> VitessesàJour : updateVitesse(dt, f_old)
+VitessesàJour   --> VTKSauvegardé    : sauvegarderVTK() [si freq OK]
+VTKSauvegardé   --> PositionsMàJ     : [t < t_end]
+VitessesàJour   --> PositionsMàJ     : [t < t_end, pas de VTK]
+
+VTKSauvegardé  --> Terminé : [t >= t_end]
+VitessesàJour  --> Terminé : [t >= t_end]
+Terminé --> [*]
+@enduml
+
+
+@startuml classes
+' ── Q7 : Diagramme de classes d'analyse ───────────────────────────────
+title Diagramme de classes d'analyse
+
+class Vecteur {
+    - x : double
+    - y : double
+    - z : double
+    + getX() : double
+    + getY() : double
+    + getZ() : double
+    + operator+() : Vecteur
+    + operator-() : Vecteur
+    + operator*() : Vecteur
+    + dot() : double
+    + operator+=()
+}
+
+class Particule {
+    - id : int
+    - type : string
+    - masse : double
+    - position : Vecteur
+    - vitesse : Vecteur
+    - force : Vecteur
+    + getId() : int
+    + getMasse() : double
+    + getPosition() : Vecteur
+    + updatePosition(dt)
+    + updateVitesse(dt, f_old)
+    + ajouterForce(f)
+    + setForce(f)
+}
+
+class Cellule {
+    - particules : vector<Particule*>
+    - voisines : vector<Cellule*>
+    - centre : Vecteur
+    + addParticule(p*)
+    + removeParticule(p*)
+    + addVoisine(c*)
+    + getParticules() : vector<Particule*>
+    + getVoisines() : vector<Cellule*>
+    + getCentre() : Vecteur
+}
+
+class Univers {
+    - dimension : int
+    - rcut : double
+    - epsilon : double
+    - sigma : double
+    - use_gravity : bool
+    - use_LJ : bool
+    - Ld : Vecteur
+    - particules : deque<Particule>
+    - cellules : vector<Cellule>
+    + setPhysicsParams(eps, sig, grav, lj)
+    + calculerForces()
+    + avancer(dt)
+    + evoluerVerlet(dt, t_end, vtk_freq)
+    + sauvegarderVTK(iteration)
+    + initialiserMaillage()
+    + assignerParticulesAuxCellules()
+}
+
+Univers "1" *-- "N" Particule : contient
+Univers "1" *-- "M" Cellule   : contient
+Cellule "1" o-- "0..*" Particule : référence
+Cellule "1" o-- "0..26" Cellule  : voisines
+Particule "1" *-- "3" Vecteur   : position\nvitesse\nforce
+@enduml

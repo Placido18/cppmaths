@@ -1,168 +1,94 @@
+/**
+ * @file visual_test.cpp
+ * @brief Test de la visualisation VTK (TP5 - Question 3).
+ *
+ * Lance une courte simulation et vérifie que les fichiers VTK sont générés
+ * correctement au format UnstructuredGrid lisible par ParaView.
+ */
+
 #include "Univers.hpp"
-#include "Particule.hpp"
-#include "Vecteur.hpp"
 #include <iostream>
-#include <deque>
-#include <vector>
-#include <cmath>
 #include <fstream>
-#include <sstream>
-#include <iomanip>
+#include <deque>
+#include <cmath>
+#include <sys/stat.h>
 
-// Fonction utilitaire pour exporter au format .xyz (lisible par Ovito ou VMD)
-void sauvegarderXYZ(const Univers& univers, int etape, double temps) {
-    std::ostringstream filename;
-    filename << "frame_" << std::setw(5) << std::setfill('0') << etape << ".xyz";
-    std::ofstream fichier(filename.str());
+static bool fileExists(const std::string& path) {
+    struct stat st;
+    return stat(path.c_str(), &st) == 0;
+}
 
-    if (fichier.is_open()) {
-        // Ligne 1: Nombre de particules
-        fichier << univers.getParticules().size() << "\n";
-        // Ligne 2: Commentaire (utile pour afficher le temps)
-        fichier << "Temps: " << temps << "\n";
-        
-        // Lignes suivantes: Type X Y Z
-        for (const auto& p : univers.getParticules()) {
-            fichier << p.getType() << " " 
-                    << p.getPosition().getX() << " " 
-                    << p.getPosition().getY() << " " 
-                    << p.getPosition().getZ() << "\n";
-        }
-    }
+static bool vtkIsValid(const std::string& path) {
+    std::ifstream f(path);
+    if (!f.is_open()) return false;
+    std::string line;
+    std::getline(f, line);
+    return line.find("VTKFile") != std::string::npos;
+}
+
+// ── Test 1 : simulation gravitationnelle 2 corps ──────────────────────
+bool testGravite() {
+    std::deque<Particule> parts;
+    parts.push_back(Particule(1, "Soleil", 1.0,   {0.0, 0.0, 0.0}, {0.0,  0.0, 0.0}));
+    parts.push_back(Particule(2, "Terre",  3.0e-6, {1.0, 0.0, 0.0}, {0.0,  1.0, 0.0}));
+
+    Univers u(3, 2, parts, 1000.0, Vecteur(100, 100, 100), {});
+    u.setPhysicsParams(1.0, 1.0, /*gravity=*/true, /*lj=*/false);
+
+    // vtk_freq=5 → 2 fichiers pour 10 itérations (output_0000 et output_0001)
+    u.evoluerVerlet(0.01, 0.1, 5);
+
+    bool ok = fileExists("output_0000.vtu") &&
+              fileExists("output_0001.vtu") &&
+              vtkIsValid("output_0000.vtu");
+    std::cout << "[Test 1 - Gravité VTK]   " << (ok ? "PASS" : "FAIL") << "\n";
+    return ok;
+}
+
+// ── Test 2 : simulation LJ 2 corps ───────────────────────────────────
+bool testLennardJones() {
+    std::deque<Particule> parts;
+    // Distance d'équilibre ≈ 1.1225 (minimum du puits LJ)
+    double d = std::pow(2.0, 1.0 / 6.0);
+    parts.push_back(Particule(1, "rouge", 1.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}));
+    parts.push_back(Particule(2, "bleu",  1.0, {d,   0.0, 0.0}, {0.0, 0.0, 0.0}));
+
+    Univers u(3, 2, parts, 2.5, Vecteur(10, 10, 10), {});
+    u.setPhysicsParams(5.0, 1.0, /*gravity=*/false, /*lj=*/true);
+
+    u.evoluerVerlet(0.0001, 0.001, 5);
+
+    bool ok = fileExists("output_0000.vtu") && vtkIsValid("output_0000.vtu");
+    std::cout << "[Test 2 - LJ VTK]        " << (ok ? "PASS" : "FAIL") << "\n";
+    return ok;
+}
+
+// ── Test 3 : champ Groupe dans le VTK ────────────────────────────────
+bool testGroupeVTK() {
+    std::deque<Particule> parts;
+    parts.push_back(Particule(1, "rouge", 1.0, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}));
+    parts.push_back(Particule(2, "bleu",  1.0, {5.0, 0.0, 0.0}, {0.0, 0.0, 0.0}));
+
+    Univers u(3, 2, parts, 100.0, Vecteur(20, 20, 20), {});
+    u.setPhysicsParams(1.0, 1.0, false, false);
+    u.evoluerVerlet(0.01, 0.01, 1);
+
+    std::ifstream f("output_0000.vtu");
+    std::string contenu((std::istreambuf_iterator<char>(f)),
+                         std::istreambuf_iterator<char>());
+    bool ok = contenu.find("Groupe") != std::string::npos;
+    std::cout << "[Test 3 - Champ Groupe]  " << (ok ? "PASS" : "FAIL") << "\n";
+    return ok;
 }
 
 int main() {
-    // ---------------------------------------------------------
-    // Paramètres de la simulation (Lab 4 - Section 3)
-    // ---------------------------------------------------------
-    double epsilon = 5.0;            //  (Pensez à le modifier dans Univers::calculerForces !)
-    double sigma = 1.0;              // [cite: 163]
-    double m = 1.0;                  // [cite: 164]
-    double rcut = 2.5 * sigma;       // [cite: 167]
-    double dt = 0.00005;             // [cite: 168]
-    double t_end = 19.5;             // [cite: 174]
-    
-    // Domaine: L1=250, L2=40. On va utiliser une boîte 2D de 250x250 pour avoir de la place en hauteur.
-    Vecteur Ld(250.0, 250.0, 0.0);   
-    int dimension = 2;
+    std::cout << "=== Tests de visualisation VTK (TP5 Q3) ===\n";
 
-    // Distance d'équilibre entre les particules
-    double d_eq = std::pow(2.0, 1.0/6.0) / sigma; // [cite: 172]
+    bool all_ok = true;
+    all_ok &= testGravite();
+    all_ok &= testLennardJones();
+    all_ok &= testGroupeVTK();
 
-    std::deque<Particule> particules;
-    int id_counter = 0;
-
-    // ---------------------------------------------------------
-    // Création du Rectangle Bleu (Cible)
-    // ---------------------------------------------------------
-    // 160 x 40 particules [cite: 171]
-    int nx_rect = 160;
-    int ny_rect = 40;
-    
-    // On le centre sur l'axe X (largeur totale de 250)
-    double start_x_rect = (250.0 - (nx_rect * d_eq)) / 2.0; 
-    double start_y_rect = 20.0; // On le place en bas du domaine
-
-    for (int i = 0; i < nx_rect; ++i) {
-        for (int j = 0; j < ny_rect; ++j) {
-            double px = start_x_rect + i * d_eq;
-            double py = start_y_rect + j * d_eq;
-            
-            Vecteur pos(px, py, 0.0);
-            Vecteur vitesse(0.0, 0.0, 0.0); // Au repos
-            
-            particules.emplace_back(id_counter++, "Bleu", m, pos, vitesse);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // Création du Carré Rouge (Projectile)
-    // ---------------------------------------------------------
-    // 40 x 40 particules [cite: 171]
-    int nx_carre = 40;
-    int ny_carre = 40;
-    
-    // On le centre au-dessus du rectangle
-    double start_x_carre = (250.0 - (nx_carre * d_eq)) / 2.0; 
-    double start_y_carre = start_y_rect + (ny_rect * d_eq) + 20.0; // 20 unités au-dessus du rectangle
-
-    for (int i = 0; i < nx_carre; ++i) {
-        for (int j = 0; j < ny_carre; ++j) {
-            double px = start_x_carre + i * d_eq;
-            double py = start_y_carre + j * d_eq;
-            
-            Vecteur pos(px, py, 0.0);
-            Vecteur vitesse(0.0, -10.0, 0.0); // v = (0, -10) vers le bas pour l'impact [cite: 165, 170]
-            
-            particules.emplace_back(id_counter++, "Rouge", m, pos, vitesse);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // Initialisation de l'Univers
-    // ---------------------------------------------------------
-    std::vector<Cellule> cellules_vides;
-    Univers univers(dimension, particules.size(), particules, rcut, Ld, cellules_vides);
-    
-    std::cout << "Initialisation du maillage spatial..." << std::endl;
-    univers.initialiserMaillage();
-    univers.assignerParticulesAuxCellules();
-
-    std::ofstream fichier_sortie("simulation.txt");
-if (!fichier_sortie.is_open()) {
-    std::cerr << "Erreur lors de la création du fichier simulation.txt" << std::endl;
-    return 1;
-}
-
-double t = 0.0;
-int etape = 0;
-int output_frequency = 2000; // Fréquence de sauvegarde
-
-// Sauvegarde initiale
-univers.calculerForces();
-sauvegarderTXT(fichier_sortie, univers, t);
-
-while (t < t_end) {
-    univers.avancer(dt);
-    
-    std::vector<Vecteur> f_old;
-    f_old.reserve(univers.getParticules().size());
-    for (const auto& p : univers.getParticules()) {
-        f_old.push_back(p.getForce());
-    }
-    
-    univers.calculerForces();
-    
-    // updateVitesse nécessite probablement d'utiliser les indices ou des itérateurs
-    // Adapte cette partie selon ta structure exacte
-    for (size_t i = 0; i < univers.getParticules().size(); ++i) {
-        // univers.getParticules()[i].updateVitesse(dt, f_old[i]); 
-        // Note: si getParticules() renvoie une copie ou un const, il te faut une méthode pour modifier la particule.
-    }
-
-    t += dt;
-    etape++;
-
-    if (etape % output_frequency == 0) {
-        std::cout << "Temps : " << t << " / " << t_end << "\r" << std::flush;
-        sauvegarderTXT(fichier_sortie, univers, t);
-    }
-}
-
-fichier_sortie.close();
-std::cout << "\nSimulation terminée. Données écrites dans simulation.txt" << std::endl;
-return 0;
-}
-
-// Fonction pour exporter dans un format texte simple : Temps ID Type X Y
-void sauvegarderTXT(std::ofstream& fichier, const Univers& univers, double temps) {
-    if (fichier.is_open()) {
-        for (const auto& p : univers.getParticules()) { // Assure-toi d'avoir un getter ou un accès public
-            fichier << temps << " " 
-                    << p.getId() << " " 
-                    << p.getType() << " " 
-                    << p.getPosition().getX() << " " 
-                    << p.getPosition().getY() << "\n";
-        }
-    }
+    std::cout << (all_ok ? "\nTous les tests passent.\n" : "\nEchec(s) detecte(s).\n");
+    return all_ok ? 0 : 1;
 }

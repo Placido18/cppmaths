@@ -199,6 +199,107 @@ para("  c) Vérifier la conservation de l'énergie totale (cinétique + potentie
      "sur un système périodique stable.")
 blank()
 
+# ── TP5 : Tests et Visualisation ──────────────────────────────────────
+h1("TP5 – Tests et Visualisation")
+blank()
+
+h2("Q1 & Q2 – Infrastructure de tests (GTest)")
+para(
+    "L'infrastructure GTest est intégrée via CMake (FetchContent, v1.17.0). "
+    "Le fichier test/test_classes.cpp contient 26 tests unitaires organisés en 5 suites :"
+)
+para("  • VecteurTest (7 tests) : constructeurs, getters/setters, opérations vectorielles, "
+     "produit scalaire, vecteur nul.")
+para("  • ParticuleTest (5 tests) : initialisation, accumulation de force, Störmer-Verlet "
+     "position et vitesse, setters.")
+para("  • CelluleTest (3 tests) : ajout, suppression de particule, liste des voisines.")
+para("  • UniversTest (6 tests) : dimensions, vitesse, avancer, calcul de forces "
+     "(Gravité+LJ), action-réaction (Newton 3), absence de force au-delà de rcut, maillage 2D.")
+para("  • LennardJonesTest (3 tests) : potentiel nul au-delà de rcut, U(σ)=0, minimum "
+     "U(r*)=-ε à r*=2^(1/6)σ, zone répulsive.")
+blank()
+para("Résultat : 26/26 tests passent (ctest --output-on-failure).")
+blank()
+
+h2("Q3 – Export VTK")
+para(
+    "La méthode Univers::sauvegarderVTK(int iteration) génère des fichiers "
+    "output_XXXX.vtu au format UnstructuredGrid XML lisibles par ParaView. "
+    "Chaque fichier contient : Position (3D), Velocity (3D), Masse (scalaire), "
+    "Groupe (entier : 0=bleu, 1=rouge pour colorier les objets)."
+)
+blank()
+para(
+    "Un programme de test dédié (test/visual_test.cpp) vérifie automatiquement "
+    "que les fichiers sont créés et que leur entête XML est valide."
+)
+blank()
+
+h1("ACVL – Analyse Conceptuelle et Visuelle du Logiciel")
+blank()
+
+h2("Q4 – Diagramme des cas d'utilisation")
+para("Acteur : Physicien / Ingénieur")
+blank()
+para("Cas d'utilisation principaux :")
+para("  UC1 – Configurer les paramètres (ε, σ, rcut, dt, t_end).")
+para("  UC2 – Créer les particules (position initiale, vitesse, masse).")
+para("  UC3 – Lancer la simulation Störmer-Verlet.")
+para("        <<include>> UC4 : Calculer les forces (LJ / Gravité).")
+para("        <<include>> UC5 : Mettre à jour les cellules spatiales.")
+para("        <<include>> UC6 : Exporter les données VTK.")
+para("  UC7 – Visualiser les résultats dans ParaView. <<extend>> UC6.")
+blank()
+para("(Voir doc/diagrammes.puml @startuml cas_utilisation pour la version PlantUML.)")
+blank()
+
+h2("Q5 – Diagramme de séquence (evoluerVerlet)")
+para("Voir doc/diagrammes.puml @startuml sequence.")
+blank()
+para("Séquence principale :")
+para("  1. Utilisateur → Univers : evoluerVerlet(dt, t_end)")
+para("  2. Univers → calculerForces() : initialise les forces")
+para("  3. Univers → sauvegarderVTK(0)")
+para("  loop [t < t_end] :")
+para("    4. Univers → avancer(dt) :")
+para("         Particule::updatePosition(dt)")
+para("         Cellule::removeParticule / addParticule [si changement]")
+para("    5. Univers → calculerForces() [avec nouvelles positions]")
+para("    6. Univers → Particule::updateVitesse(dt, f_old)")
+para("    7. Univers → sauvegarderVTK() [si iteration % vtk_freq == 0]")
+blank()
+
+h2("Q6 – Diagramme de transitions")
+para("Voir doc/diagrammes.puml @startuml transitions.")
+blank()
+para("États :")
+para("  [*] → Initialisation → MaillageCreé → ParticulesAssignées")
+para("  ParticulesAssignées → ForcesCalculées")
+para("  loop :")
+para("    ForcesCalculées → PositionsMàJ → CellulesàJour")
+para("    → NouvellesForcesCalculées → VitessesàJour")
+para("    → VTKSauvegardé [si freq] → PositionsMàJ [si t < t_end]")
+para("  ForcesCalculées / VTKSauvegardé → Terminé [si t >= t_end] → [*]")
+blank()
+
+h2("Q7 – Diagramme de classes d'analyse")
+para("Voir doc/diagrammes.puml @startuml classes.")
+blank()
+para("Classes et relations :")
+para("  Vecteur : x, y, z + opérations vectorielles.")
+para("  Particule : id, type, masse + position/vitesse/force (Vecteur) + Störmer-Verlet.")
+para("  Cellule : liste de Particule* (référence, sans possession) + liste de Cellule* voisines.")
+para("  Univers : deque<Particule> (possession) + vector<Cellule> (possession) "
+     "+ paramètres physiques (ε, σ, use_gravity, use_LJ).")
+blank()
+para("Associations :")
+para("  Univers 1 *-- N Particule   (composition)")
+para("  Univers 1 *-- M Cellule     (composition)")
+para("  Cellule  1 o-- 0..* Particule (agrégation par pointeur)")
+para("  Cellule  1 o-- 0..26 Cellule  (agrégation : voisines)")
+para("  Particule 1 *-- 3 Vecteur    (composition : position, vitesse, force)")
+blank()
+
 # ── Sauvegarde ──────────────────────────────────────────────────────────
 out = "/home/menianer/ensimag/C++curse/cppmaths/doc/rapport_lab4.odt"
 doc.save(out)

@@ -45,7 +45,7 @@ void simulationCollision() {
     const double sigma   = 1.0;
     const double rcut    = 2.5 * sigma;
     const double dt      = 0.00005;
-    const double t_end   = 3;
+    const double t_end   = 19.5;
 
     // Distance inter-particulaire à l'équilibre du puits de LJ
     const double d = std::pow(2.0, 1.0 / 6.0) * sigma;  // ≈ 1.1225
@@ -94,7 +94,7 @@ void simulationCollision() {
     std::cout << "Lancement de la simulation de collision (" << particules.size()
               << " particules)..." << std::endl;
     // vtk_freq=1000 → ~390 fichiers VTK pour t_end=19.5
-    univers.evoluerVerlet(dt, t_end, 10000);
+    univers.evoluerVerlet(dt, t_end, 1000);
     std::cout << "Simulation terminée. Fichiers VTK générés." << std::endl;
 }
 
